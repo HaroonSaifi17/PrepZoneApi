@@ -8,6 +8,9 @@ const studentRouter = require('./routes/student')
 const app = express()
 const port = 4040
 
+app.use(express.urlencoded())
+app.use(express.json())
+
 mongoose.connect(
   process.env.BLOGDB_CONNECTION_URL,
   {
