@@ -4,6 +4,7 @@ const cors = require('cors')
 require('dotenv').config()
 
 const studentRouter = require('./routes/student')
+const loginRouter = require('./routes/login')
 
 const app = express()
 const port = 4040
@@ -32,6 +33,7 @@ app.use(
 )
 
 app.use('/student', studentRouter)
+app.use('/login', loginRouter)
 
 app.listen(port, () => {
   console.log(`Server is listening at http://localhost:${port} `)
