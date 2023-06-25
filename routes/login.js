@@ -5,10 +5,9 @@ var GoogleStrategy = require('passport-google-oauth20').Strategy
 passport.use(
   new GoogleStrategy(
     {
-      clientID:
-        '94004341890-n5p6bivcp3hgi04q8ssavsst61vpp55a.apps.googleusercontent.com',
-      clientSecret: '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',
-      callbackURL: 'http://localhost:4040/login/callback',
+      clientID:process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.CALLBACK_URL,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       done(null, profile)
@@ -31,7 +30,7 @@ router.get(
   '/callback',
   passport.authenticate('google', {
     failureRedirect: '/login',
-    successReturnToOrRedirect: 'http://localhost:4200/student',
+    successReturnToOrRedirect: process.env.REDIRECT_URL,
   })
 )
 

@@ -44,11 +44,11 @@ app.use(
 )
 
 function isLoggedIn(req, res, next) {
-  req.user ? next() : res.sendStatus(401)
+  req.user ? next() : res.redirect('/login')
 }
 
 app.use('/login', loginRouter)
-//app.use(isLoggedIn())
+app.use(isLoggedIn)
 app.use('/student', studentRouter)
 
 app.get('logout', (req, res) => {
@@ -60,6 +60,6 @@ app.get('logout', (req, res) => {
   }
 })
 
-app.listen(port, () => {
+app.listen(process.env.PORT || port, () => {
   console.log(`Server is listening at http://localhost:${port} `)
 })
