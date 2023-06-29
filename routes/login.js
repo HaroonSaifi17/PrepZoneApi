@@ -1,37 +1,27 @@
-const router = require('express').Router()
 const passport = require('passport')
-var GoogleStrategy = require('passport-google-oauth20').Strategy
-
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID:process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.CALLBACK_URL,
-    },
-    async (req, accessToken, refreshToken, profile, done) => {
-      done(null, profile)
-    }
-  )
-)
-
-passport.serializeUser(function (user, done) {
-  done(null, user)
-})
-passport.deserializeUser(function (user, done) {
-  done(null, user.id)
-})
+const router = require('express').Router()
+const jwt = require('jsonwebtoken')
 
 router.get(
   '/',
-  passport.authenticate('google', { scope: ['email', 'profile'] })
+  passport.authenticate('google', { scope: ['email', 'profile'],session:false })
 )
 router.get(
   '/callback',
   passport.authenticate('google', {
     failureRedirect: '/login',
-    successReturnToOrRedirect: process.env.REDIRECT_URL,
-  })
+    session:false
+  }),(req,res)=>{
+   try {
+      const token = jwt.sign({userId:req.user.id, userEmail:req.user._json.email },process.env.JWT_SECRET,{
+      expiresIn: '10h' 
+    })
+      res.setHeader('Authorization', `Bearer ${token}`);
+      res.redirect(process.env.REDIRECT_URL);
+   } catch (error) {
+    res.status(401).send(error.message).end()
+   }
+  }
 )
 
 module.exports = router
