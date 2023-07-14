@@ -12,7 +12,31 @@ passport.use(
       callbackURL: process.env.CALLBACK_URL,
     },
     async (req, accessToken, refreshToken, profile, done) => {
-      done(null, profile)
+      Student.findOne({ email: profile._json.email })
+        .then((user) => {
+          if (user) {
+            done(null, user)
+          } else {
+            const newUser = new Student({
+              name: profile.displayName,
+              email:profile._json.email,
+              profileImg:profile._json.picture
+            })
+            newUser
+              .save()
+              .then((user) => {
+                done(null, user)
+              })
+              .catch((err) => {
+                console.error('Failed to save new user', err)
+                done(err, null)
+              })
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to find user', err)
+          done(err, null)
+        })
     }
   )
 )
