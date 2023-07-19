@@ -19,5 +19,49 @@ router.get(
     }
   }
 )
+router.get(
+  '/jeeData',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const data = {
+        name:'Haroon Saifi',
+        topMarks: 220,
+        averageMarks: 180,
+        physicsAccuracy: 75,
+        chemistryAccuracy: 80,
+        mathAccuracy: 50,
+        mathTime: 1.5,
+        chemistryTime: 1,
+        physicsTime: 2,
+      }
+      res.json(data)
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
+router.get(
+  '/neetData',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const data = {
+        name:'Haroon Saifi',
+        topMarks: 220,
+        averageMarks: 180,
+        physicsAccuracy: 75,
+        chemistryAccuracy: 80,
+        bioAccuracy: 50,
+        bioTime: 1.5,
+        chemistryTime: 1,
+        physicsTime: 2,
+      }
+      res.json(data)
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
 
 module.exports = router
