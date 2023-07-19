@@ -20,6 +20,27 @@ router.get(
   }
 )
 router.get(
+  '/checkNew',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const data = await Student.findById(req.user.userId).exec()
+      if (data) {
+        if(typeof data.phoneNumber === 'undefined'){
+          res.send({ isNew: false }).end()
+        }
+        else{
+          res.send({ isNew: true }).end()
+        }
+      } else {
+        res.status(404).json({ error: 'Data not found' })
+      }
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
+router.get(
   '/jeeData',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
