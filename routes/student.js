@@ -8,9 +8,25 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).exec()
+      const data = await Student.findById(req.user.userId).select('profileImg').exec()
       if (data) {
-        res.send({profileImg:data.profileImg}).end()
+        res.send(data).end()
+      } else {
+        res.status(404).json({ error: 'Data not found' })
+      }
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
+router.get(
+  '/profileData',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const data = await Student.findById(req.user.userId).select('profileImg name email phoneNumber prep').exec()
+      if (data) {
+        res.send(data).end()
       } else {
         res.status(404).json({ error: 'Data not found' })
       }
@@ -24,7 +40,7 @@ router.post(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).exec()
+      const data = await Student.findById(req.user.userId).select('name phoneNumber prep').exec()
       if (data) {
         data.name = req.body.name
         data.phoneNumber = req.body.phoneNumber
@@ -44,7 +60,7 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).exec()
+      const data = await Student.findById(req.user.userId).select('phoneNumber').exec()
       if (data) {
         if (typeof data.phoneNumber === 'undefined') {
           res.send({ isNew: false, name: data.name }).end()
