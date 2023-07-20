@@ -15,7 +15,6 @@ require('./setup/passport')
 
 app.use('/login', loginRouter)
 app.use('/student', studentRouter)
-app.use('/logout', studentRouter)
 
 app.listen(process.env.PORT || port, () => {
   console.log(`Server is listening at http://localhost:${port} `)

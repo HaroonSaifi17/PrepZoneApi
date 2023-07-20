@@ -9,6 +9,7 @@ const studentSchema = new mongoose.Schema({
   },
   phoneNumber: String,
   profileImg: String,
+  prep:String,
   math: {
     type: {
       tests: [{
