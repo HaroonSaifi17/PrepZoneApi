@@ -57,7 +57,7 @@ router.get(
   async (req, res) => {
     try {
       const page = parseInt(req.query.page) - 1 || 0
-      const limit = parseInt(req.query.limit) || 5
+      const limit = parseInt(req.query.limit) || 10
       const search = req.query.search || ''
       let sort = parseInt(req.query.sort) || -1
       let genre = req.query.subject || 'All'
