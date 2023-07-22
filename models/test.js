@@ -1,28 +1,30 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
-// Define the schema for the test model
-const testSchema = new mongoose.Schema({
+const subtestSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
   },
   subject: {
-    type: String,
-    required: true
+    type: [String],
+    required: true,
   },
-  difficulty: {
+  exam: {
     type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
-    required: true
+    required: true,
   },
-  questionIds: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Question',
-    required: true
-  }]
-});
+  totalQuestions: {
+    type: [String],
+    required: true,
+  },
+  questionIds: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+  ],
+})
 
-const Test = mongoose.model('tests', testSchema);
+const Test = mongoose.model('tests', subtestSchema)
 
-module.exports = Test;
-
+module.exports = Test

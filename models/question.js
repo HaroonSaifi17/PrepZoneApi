@@ -20,14 +20,18 @@ const questionSchema = new mongoose.Schema({
   }
 });
 
-const MathQuestion = mongoose.model('MathQuestion', questionSchema);
-const BiologyQuestion = mongoose.model('BiologyQuestion', questionSchema);
-const PhysicsQuestion = mongoose.model('PhysicsQuestion', questionSchema);
-const ChemistryQuestion = mongoose.model('ChemistryQuestion', questionSchema);
+const JMathQuestion = mongoose.model('JMathQuestion', questionSchema);
+const JPhysicsQuestion = mongoose.model('JPhysicsQuestion', questionSchema);
+const JChemistryQuestion = mongoose.model('JChemistryQuestion', questionSchema);
+const NBiologyQuestion = mongoose.model('NBiologyQuestion', questionSchema);
+const NPhysicsQuestion = mongoose.model('NPhysicsQuestion', questionSchema);
+const NChemistryQuestion = mongoose.model('NChemistryQuestion', questionSchema);
 
 module.exports = {
-  MathQuestion,
-  BiologyQuestion,
-  PhysicsQuestion,
-  ChemistryQuestion
+  JMathQuestion,
+  JPhysicsQuestion,
+  JChemistryQuestion,
+  NBiologyQuestion,
+  NPhysicsQuestion,
+  NChemistryQuestion
 };

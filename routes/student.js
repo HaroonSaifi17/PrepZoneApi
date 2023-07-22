@@ -8,7 +8,9 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).select('profileImg').exec()
+      const data = await Student.findById(req.user.userId)
+        .select('profileImg')
+        .exec()
       if (data) {
         res.send(data).end()
       } else {
@@ -24,7 +26,9 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).select('profileImg name email phoneNumber prep').exec()
+      const data = await Student.findById(req.user.userId)
+        .select('profileImg name email phoneNumber prep')
+        .exec()
       if (data) {
         res.send(data).end()
       } else {
@@ -40,11 +44,13 @@ router.post(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).select('name phoneNumber prep').exec()
+      const data = await Student.findById(req.user.userId)
+        .select('name phoneNumber prep')
+        .exec()
       if (data) {
         data.name = req.body.name
         data.phoneNumber = req.body.phoneNumber
-        data.prep=req.body.prep
+        data.prep = req.body.prep
         await data.save()
         res.status(200).end()
       } else {
@@ -60,7 +66,9 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = await Student.findById(req.user.userId).select('phoneNumber').exec()
+      const data = await Student.findById(req.user.userId)
+        .select('phoneNumber')
+        .exec()
       if (data) {
         if (typeof data.phoneNumber === 'undefined') {
           res.send({ isNew: false, name: data.name }).end()
@@ -80,18 +88,27 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = {
-        name: 'Haroon Saifi',
-        topMarks: 220,
-        averageMarks: 180,
-        physicsAccuracy: 75,
-        chemistryAccuracy: 80,
-        mathAccuracy: 50,
-        mathTime: 1.5,
-        chemistryTime: 1,
-        physicsTime: 2,
+      const data = await Student.findById(req.user.userId)
+        .select(
+          'name topMarks averageMarks physicsAccuracy chemistryAccuracy mathAccuracy mathTime chemistryTime physicsTime'
+        )
+        .exec()
+      if (data) {
+      } else {
+        res.status(404).json({ error: 'Data not found' })
       }
-      res.json(data)
+      const data1 = {
+        name: data.name,
+        topMarks: data.topMarks[0],
+        averageMarks: data.averageMarks[0],
+        physicsAccuracy: data.physicsAccuracy[0],
+        chemistryAccuracy: data.chemistryAccuracy[0],
+        mathAccuracy: data.mathAccuracy,
+        mathTime: data.mathTime,
+        chemistryTime: data.chemistryAccuracy[0],
+        physicsTime: data.physicsAccuracy[0],
+      }
+      res.json(data1)
     } catch (error) {
       res.status(401).send(error.message).end()
     }
@@ -102,18 +119,27 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
-      const data = {
-        name: 'Haroon Saifi',
-        topMarks: 220,
-        averageMarks: 180,
-        physicsAccuracy: 75,
-        chemistryAccuracy: 80,
-        bioAccuracy: 50,
-        bioTime: 1.5,
-        chemistryTime: 1,
-        physicsTime: 2,
+      const data = await Student.findById(req.user.userId)
+        .select(
+          'name topMarks averageMarks physicsAccuracy chemistryAccuracy bioAccuracy mbioTime chemistryTime physicsTime'
+        )
+        .exec()
+      if (data) {
+      } else {
+        res.status(404).json({ error: 'Data not found' })
       }
-      res.json(data)
+      const data1 = {
+        name: data.name,
+        topMarks: data.topMarks[0],
+        averageMarks: data.averageMarks[0],
+        physicsAccuracy: data.physicsAccuracy[0],
+        chemistryAccuracy: data.chemistryAccuracy[0],
+        bioAccuracy: data.bioAccuracy,
+        bioTime: data.bioTime,
+        chemistryTime: data.chemistryAccuracy[0],
+        physicsTime: data.physicsAccuracy[0],
+      }
+      res.json(data1)
     } catch (error) {
       res.status(401).send(error.message).end()
     }

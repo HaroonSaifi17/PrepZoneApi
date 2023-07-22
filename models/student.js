@@ -1,111 +1,62 @@
-const mongoose = require("mongoose")
+const mongoose = require('mongoose')
 
 const studentSchema = new mongoose.Schema({
   name: String,
   email: {
-    type:String,
-    required:true,
-    unique:true
+    type: String,
+    required: true,
+    unique: true,
   },
   phoneNumber: String,
   profileImg: String,
-  prep:String,
-  math: {
-    type: {
-      tests: [{
-        id: {
-          type: Number,
-          required: true
-        },
-        performance: {
-          type: Number,
-          default: 0
-        },
-        time: {
-          type: Number,
-          default: 0
-        },
-        accuracy: {
-          type: Number,
-          default: 0
-        }
-      }]
-    },
-    default: {}
+  prep: String,
+  result: [{
+    id:mongoose.Schema.Types.ObjectId,
+    correct:[Number],
+    wrong:[Number],
+    time:[Number]
+  }],
+  default:{},
+  topMarks: {
+    type: [Number],
+    default: [0,0],
   },
-  biology: {
-    type: {
-      tests: [{
-        id: {
-          type: Number,
-          required: true
-        },
-        performance: {
-          type: Number,
-          default: 0
-        },
-        time: {
-          type: Number,
-          default: 0
-        },
-        accuracy: {
-          type: Number,
-          default: 0
-        }
-      }]
-    },
-    default: {}
+  averageMarks: {
+    type: [Number],
+    default: [0,0],
   },
-  physics: {
-    type: {
-      tests: [{
-        id: {
-          type: Number,
-          required: true
-        },
-        performance: {
-          type: Number,
-          default: 0
-        },
-        time: {
-          type: Number,
-          default: 0
-        },
-        accuracy: {
-          type: Number,
-          default: 0
-        }
-      }]
-    },
-    default: {}
+  physicsAccuracy: {
+    type: [Number],
+    default: [0,0],
   },
-  chemistry: {
-    type: {
-      tests: [{
-        id: {
-          type: Number,
-          required: true
-        },
-        performance: {
-          type: Number,
-          default: 0
-        },
-        time: {
-          type: Number,
-          default: 0
-        },
-        accuracy: {
-          type: Number,
-          default: 0
-        }
-      }]
-    },
-    default: {}
+  chemistryAccuracy: {
+    type: [Number],
+    default: [0,0],
   },
-  overallPerformance: {
+  bioAccuracy:{
     type: Number,
-    default: 0
-  }
+    default: 0,
+  },
+  bioTime:{
+    type: Number,
+    default: 0,
+  },
+  mathAccuracy:{
+    type: Number,
+    default: 0,
+  },
+  mathTime:{
+    type: Number,
+    default: 0,
+  },
+  chemistryTime: {
+    type: [Number],
+    default: [0,0],
+  },
+  physicsTime: {
+    type: [Number],
+    default: [0,0],
+  },
 })
 const Student = mongoose.model('students', studentSchema)
 module.exports = Student
