@@ -1,149 +1,114 @@
-const router = require('express').Router()
-const Student = require('../models/student')
-const passport = require('passport')
-const jwt = require('jsonwebtoken')
+const router = require('express').Router();
+const Student = require('../models/student');
+const passport = require('passport');
 
-router.get(
-  '/profileImg',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const data = await Student.findById(req.user.userId)
-        .select('profileImg')
-        .exec()
-      if (data) {
-        res.send(data).end()
-      } else {
-        res.status(404).json({ error: 'Data not found' })
-      }
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
-  }
-)
-router.get(
-  '/profileData',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const data = await Student.findById(req.user.userId)
-        .select('profileImg name email phoneNumber prep')
-        .exec()
-      if (data) {
-        res.send(data).end()
-      } else {
-        res.status(404).json({ error: 'Data not found' })
-      }
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
-  }
-)
-router.post(
-  '/newStudentPost',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const data = await Student.findById(req.user.userId)
-        .select('name phoneNumber prep')
-        .exec()
-      if (data) {
-        data.name = req.body.name
-        data.phoneNumber = req.body.phoneNumber
-        data.prep = req.body.prep
-        await data.save()
-        res.status(200).end()
-      } else {
-        res.status(404).json({ error: 'Data not found' })
-      }
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
-  }
-)
-router.get(
-  '/checkNew',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const data = await Student.findById(req.user.userId)
-        .select('phoneNumber')
-        .exec()
-      if (data) {
-        if (typeof data.phoneNumber === 'undefined') {
-          res.send({ isNew: false, name: data.name }).end()
-        } else {
-          res.send({ isNew: true }).end()
-        }
-      } else {
-        res.status(404).json({ error: 'Data not found' })
-      }
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
-  }
-)
-router.get(
-  '/jeeData',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const data = await Student.findById(req.user.userId)
-        .select(
-          'name topMarks averageMarks physicsAccuracy chemistryAccuracy mathAccuracy mathTime chemistryTime physicsTime'
-        )
-        .exec()
-      if (data) {
-      } else {
-        res.status(404).json({ error: 'Data not found' })
-      }
-      const data1 = {
-        name: data.name,
-        topMarks: data.topMarks[0],
-        averageMarks: data.averageMarks[0],
-        physicsAccuracy: data.physicsAccuracy[0],
-        chemistryAccuracy: data.chemistryAccuracy[0],
-        mathAccuracy: data.mathAccuracy,
-        mathTime: data.mathTime,
-        chemistryTime: data.chemistryAccuracy[0],
-        physicsTime: data.physicsAccuracy[0],
-      }
-      res.json(data1)
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
-  }
-)
-router.get(
-  '/neetData',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const data = await Student.findById(req.user.userId)
-        .select(
-          'name topMarks averageMarks physicsAccuracy chemistryAccuracy bioAccuracy mbioTime chemistryTime physicsTime'
-        )
-        .exec()
-      if (data) {
-      } else {
-        res.status(404).json({ error: 'Data not found' })
-      }
-      const data1 = {
-        name: data.name,
-        topMarks: data.topMarks[0],
-        averageMarks: data.averageMarks[0],
-        physicsAccuracy: data.physicsAccuracy[0],
-        chemistryAccuracy: data.chemistryAccuracy[0],
-        bioAccuracy: data.bioAccuracy,
-        bioTime: data.bioTime,
-        chemistryTime: data.chemistryAccuracy[0],
-        physicsTime: data.physicsAccuracy[0],
-      }
-      res.json(data1)
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
-  }
-)
+const authenticateJWT = passport.authenticate('jwt', { session: false });
 
-module.exports = router
+async function getStudentDataById(userId, fields) {
+  try {
+    const data = await Student.findById(userId).select(fields).exec();
+    if (data) {
+      return data;
+    } else {
+      throw new Error('Data not found');
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
+router.get('/profileImg', authenticateJWT, async (req, res) => {
+  try {
+    const data = await getStudentDataById(req.user.userId, 'profileImg');
+    res.send(data).end();
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+router.get('/profileData', authenticateJWT, async (req, res) => {
+  try {
+    const data = await getStudentDataById(
+      req.user.userId,
+      'profileImg name email phoneNumber prep'
+    );
+    res.send(data).end();
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+router.post('/newStudentPost', authenticateJWT, async (req, res) => {
+  try {
+    const data = await getStudentDataById(req.user.userId, 'name phoneNumber prep');
+    data.name = req.body.name;
+    data.phoneNumber = req.body.phoneNumber;
+    data.prep = req.body.prep;
+    await data.save();
+    res.status(200).end();
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+router.get('/checkNew', authenticateJWT, async (req, res) => {
+  try {
+    const data = await getStudentDataById(req.user.userId, 'phoneNumber');
+    if (typeof data.phoneNumber === 'undefined') {
+      res.send({ isNew: false, name: data.name }).end();
+    } else {
+      res.send({ isNew: true }).end();
+    }
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+router.get('/jeeData', authenticateJWT, async (req, res) => {
+  try {
+    const data = await getStudentDataById(
+      req.user.userId,
+      'name topMarks averageMarks physicsAccuracy chemistryAccuracy mathAccuracy mathTime chemistryTime physicsTime'
+    );
+    const data1 = {
+      name: data.name,
+      topMarks: data.topMarks[0],
+      averageMarks: data.averageMarks[0],
+      physicsAccuracy: data.physicsAccuracy[0],
+      chemistryAccuracy: data.chemistryAccuracy[0],
+      mathAccuracy: data.mathAccuracy,
+      mathTime: data.mathTime,
+      chemistryTime: data.chemistryAccuracy[0],
+      physicsTime: data.physicsAccuracy[0],
+    };
+    res.json(data1);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+router.get('/neetData', authenticateJWT, async (req, res) => {
+  try {
+    const data = await getStudentDataById(
+      req.user.userId,
+      'name topMarks averageMarks physicsAccuracy chemistryAccuracy bioAccuracy bioTime chemistryTime physicsTime'
+    );
+    const data1 = {
+      name: data.name,
+      topMarks: data.topMarks[0],
+      averageMarks: data.averageMarks[0],
+      physicsAccuracy: data.physicsAccuracy[0],
+      chemistryAccuracy: data.chemistryAccuracy[0],
+      bioAccuracy: data.bioAccuracy,
+      bioTime: data.bioTime,
+      chemistryTime: data.chemistryAccuracy[0],
+      physicsTime: data.physicsAccuracy[0],
+    };
+    res.json(data1);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+module.exports = router;
+
