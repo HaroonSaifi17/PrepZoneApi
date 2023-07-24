@@ -14,10 +14,10 @@ const Test = require('../models/test')
 const router = require('express').Router()
 
 async function getRandomQuestions(Model, difficulty, num) {
-  return await Model.aggregate([{ $sample: { size: num } }])
-    .where('difficulty')
-    .in(difficulty)
-    .select('_id')
+  return await Model.aggregate([
+    { $match: { difficulty: { $eq: difficulty } } },
+    { $sample: { size: num } }
+  ]).exec();
 }
 
 const msubjectToModelMap = {
@@ -84,7 +84,7 @@ router.post('/addNQuestion', async (req, res) => {
   }
 })
 
-router.post('/GeneratePaper', async (req, res) => {
+router.get('/GeneratePaper', async (req, res) => {
   try {
     const { subject, exam, difficulty, totalQuestions, num } = req.body
 
@@ -155,7 +155,8 @@ router.post('/GeneratePaper', async (req, res) => {
       name: req.body.name,
       subject: req.body.subject,
       exam: req.body.exam,
-      totalQuestions: req.body.exam,
+      totalQuestions: req.body.totalQuestions,
+      date: new Date().toLocaleString(),
       questionIds,
     })
 

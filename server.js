@@ -5,6 +5,7 @@ require('dotenv').config()
 const studentRouter = require('./routes/student')
 const loginRouter = require('./routes/login')
 const notesRouter = require('./routes/notes')
+const adminRouter = require('./routes/admin')
 
 const app = express()
 const port = process.env.PORT
@@ -17,6 +18,7 @@ require('./setup/passport')
 app.use('/login', loginRouter)
 app.use('/student', studentRouter)
 app.use('/notes', notesRouter)
+app.use('/admin', adminRouter)
 
 app.listen(process.env.PORT || port, () => {
   console.log(`Server is listening at http://localhost:${port} `)

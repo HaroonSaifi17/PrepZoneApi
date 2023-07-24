@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Student = require('../models/student');
+const Test = require('../models/test');
 const passport = require('passport');
 
 const authenticateJWT = passport.authenticate('jwt', { session: false });
@@ -109,6 +110,54 @@ router.get('/neetData', authenticateJWT, async (req, res) => {
     res.status(404).json({ error: error.message });
   }
 });
+
+router.get('/getTest', authenticateJWT, async (req, res) => {
+  try {
+      const page = parseInt(req.query.page) - 1 || 0
+      const limit = parseInt(req.query.limit) || 10
+      const search = req.query.search || ''
+      let sort = parseInt(req.query.sort) || -1
+      let genre = req.query.subject || 'All'
+      let pageno = [1]
+      const genreOptions = ['physics', 'chemistry', 'math', 'biology']
+
+      genre === 'All'
+        ? (genre = [...genreOptions])
+        : (genre = req.query.subject.split(','))
+
+      const tests = await Test.find({ name: { $regex: search, $options: 'i' } })
+        .where('subject')
+        .in([...genre])
+        .sort({ date: sort })
+        .skip(page * limit)
+        .limit(limit)
+        .select('name totalQuestions exam date')
+
+      const total = await Test.countDocuments({
+        subject: { $in: [...genre] },
+        name: { $regex: search, $options: 'i' },
+      })
+
+      let totalpage = total / limit
+      if (totalpage > 1) {
+        for (let i = 1; i < totalpage; i++) {
+          pageno.push(i + 1)
+        }
+      }
+      const response = {
+        error: false,
+        total,
+        page: page + 1,
+        limit,
+        tests,
+        pageno,
+      }
+      res.status(200).json(response)
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
 
 module.exports = router;
 

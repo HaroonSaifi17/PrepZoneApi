@@ -14,9 +14,10 @@ const subtestSchema = new mongoose.Schema({
     required: true,
   },
   totalQuestions: {
-    type: [String],
+    type: Number,
     required: true,
   },
+  date:String,
   questionIds: [
     {
       type: mongoose.Schema.Types.ObjectId,
