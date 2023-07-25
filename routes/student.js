@@ -1,7 +1,17 @@
 const router = require('express').Router()
 const Student = require('../models/student')
 const Test = require('../models/test')
-const   NPhysicsQuestion = require('../models/question')
+const {
+  JPhysicsQuestion,
+  JChemistryQuestion,
+  JMathQuestion,
+  NBiologyQuestion,
+  NPhysicsQuestion,
+  NChemistryQuestion,
+  JMathNumQuestion,
+  JChemistryNumQuestion,
+  JPhysicsNumQuestion,
+} = require('../models/question')
 const passport = require('passport')
 
 const authenticateJWT = passport.authenticate('jwt', { session: false })
@@ -28,6 +38,22 @@ router.get('/profileImg', authenticateJWT, async (req, res) => {
   }
 })
 
+const msubjectToModelMap = {
+  math: {
+    jee:NPhysicsQuestion.JMathQuestion
+  },
+  bio: {
+    neet:NBiologyQuestion
+  },
+  physics: {
+    jee: NPhysicsQuestion.JPhysicsQuestion,
+    neet: NPhysicsQuestion,
+  },
+  chemistry: {
+    jee: JChemistryQuestion,
+    neet: NChemistryQuestion,
+  },
+}
 router.get('/profileData', authenticateJWT, async (req, res) => {
   try {
     const data = await getStudentDataById(
@@ -161,15 +187,28 @@ router.get('/getTests', authenticateJWT, async (req, res) => {
       tests,
       pageno,
     }
-    console.log(response)
     res.status(200).json(response)
   } catch (error) {
     res.status(404).json({ error: error.message })
   }
 })
-router.get('/gettest/:id',authenticateJWT, async (req, res) => {
+router.get('/getTest/:id',authenticateJWT, async (req, res) => {
   try {
     const question= await Test.findById(req.params.id) 
+    res.send(question).end()
+  } catch (error) {
+    res.status(404).json({ error: error.message })
+  }
+})
+router.get('/getQuestion',authenticateJWT, async (req, res) => {
+  try {
+    const { subject, exam, id } =
+      req.query
+    const Model = msubjectToModelMap[subject][exam]
+    if (!Model) {
+      throw new Error('Invalid subject or exam type.')
+    }
+    const question = await Model.findById(id).select('questionText options').exec()
     res.send(question).end()
   } catch (error) {
     res.status(404).json({ error: error.message })
