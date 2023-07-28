@@ -38,22 +38,6 @@ router.get('/profileImg', authenticateJWT, async (req, res) => {
   }
 })
 
-const msubjectToModelMap = {
-  math: {
-    jee:NPhysicsQuestion.JMathQuestion
-  },
-  bio: {
-    neet:NBiologyQuestion
-  },
-  physics: {
-    jee: NPhysicsQuestion.JPhysicsQuestion,
-    neet: NPhysicsQuestion,
-  },
-  chemistry: {
-    jee: JChemistryQuestion,
-    neet: NChemistryQuestion,
-  },
-}
 router.get('/profileData', authenticateJWT, async (req, res) => {
   try {
     const data = await getStudentDataById(
@@ -192,37 +176,32 @@ router.get('/getTests', authenticateJWT, async (req, res) => {
     res.status(404).json({ error: error.message })
   }
 })
-router.get('/getTest/:id',authenticateJWT, async (req, res) => {
+router.get('/getTest/:id', authenticateJWT, async (req, res) => {
   try {
-    const question= await Test.findById(req.params.id) 
+    const question = await Test.findById(req.params.id)
     res.send(question).end()
   } catch (error) {
     res.status(404).json({ error: error.message })
   }
 })
-router.get('/getQuestion',authenticateJWT, async (req, res) => {
+router.get('/getQuestion', authenticateJWT, async (req, res) => {
   try {
-    const { subject, exam, id } =
-      req.query
+    const { subject, exam, id } = req.query
     const Model = msubjectToModelMap[subject][exam]
     if (!Model) {
       throw new Error('Invalid subject or exam type.')
     }
-    const question = await Model.findById(id).select('questionText options').exec()
+    const question = await Model.findById(id)
+      .select('questionText options')
+      .exec()
     res.send(question).end()
   } catch (error) {
     res.status(404).json({ error: error.message })
   }
 })
-const nsubjectToModelMap = {
-  math: JMathNumQuestion,
-  physics: JPhysicsNumQuestion,
-  chmistry: JChemistryNumQuestion,
-}
-router.get('/getnQuestion',authenticateJWT, async (req, res) => {
+router.get('/getnQuestion', authenticateJWT, async (req, res) => {
   try {
-    const { subject, exam, id } =
-      req.query
+    const { subject, exam, id } = req.query
     const Model = nsubjectToModelMap[subject][exam]
     if (!Model) {
       throw new Error('Invalid subject or exam type.')
@@ -233,19 +212,168 @@ router.get('/getnQuestion',authenticateJWT, async (req, res) => {
     res.status(404).json({ error: error.message })
   }
 })
-router.post('/result',authenticateJWT, async (req, res) => {
+
+const nsubjectToModelMap = {
+  math: JMathNumQuestion,
+  physics: JPhysicsNumQuestion,
+  chmistry: JChemistryNumQuestion,
+}
+const msubjectToModelMap = {
+  math: {
+    jee: NPhysicsQuestion.JMathQuestion,
+  },
+  bio: {
+    neet: NBiologyQuestion,
+  },
+  physics: {
+    jee: NPhysicsQuestion.JPhysicsQuestion,
+    neet: NPhysicsQuestion,
+  },
+  chemistry: {
+    jee: JChemistryQuestion,
+    neet: NChemistryQuestion,
+  },
+}
+router.post('/result', authenticateJWT, async (req, res) => {
   try {
     let student = await Student.findById(req.user.userId).exec()
-    student.results.push([{
-      result:req.body.choosenOption,
-      testId:req.body.testId,
+    const { choosenOption, testId, time } = req.body
+    const test = await Test.findById(testId)
+      .select('subject exam totalQuestions questionIds num')
+      .exec()
+    let correct = [0]
+    let wrong = [0]
+    let index = 0
+    let subject = test.subject[index]
+    let exam = test.exam
+    for (let i = 0; i < test.totalQuestions; i++) {
+      if (test.subject.length == 3) {
+        if (i < test.totalQuestions / 2) {
+          index = 1
+          correct.push(0)
+          wrong.push(0)
+        } else if (i < test.totalQuestions / 1.5) {
+          correct.push(0)
+          wrong.push(0)
+          index = 2
+        }
+      }
+      subject = test.subject[index]
+      if (i < test.totalQuestions - test.num) {
+        const Model = msubjectToModelMap[subject][exam]
+
+        if (!Model) {
+          throw new Error('Invalid subject or exam type.')
+        }
+        const question = await Model.findById(test.questionIds[i])
+          .select('correctOption')
+          .exec()
+
+        const selectedOption = choosenOption[i]
+        const correctOption = question.correctOption
+        if (selectedOption === correctOption) {
+          correct[index]++
+        } else if (selectedOption === 999) {
+        } else {
+          wrong[index]++
+        }
+      } else {
+        if (test.subject.length == 3) {
+          if (i < test.totalQuestions / 2) {
+            index = 1
+            correct.push(0)
+            wrong.push(0)
+          } else if (i < test.totalQuestions / 1.5) {
+            correct.push(0)
+            wrong.push(0)
+            index = 2
+          }
+        }
+        subject = test.subject[index]
+        const Model = nsubjectToModelMap[subject]
+        if (!Model) {
+          throw new Error('Invalid subject or exam type.')
+        }
+        const question = await Model.findById(test.questionIds[i])
+          .select('correctOption')
+          .exec()
+        const selectedOption = choosenOption[i]
+        const correctOption = question.correctOption
+        if (selectedOption === correctOption) {
+          correct[index]++
+        } else if (selectedOption === 999) {
+        } else {
+          wrong[index]++
+        }
+      }
+    }
+
+    let marks
+    if (test.subject.length == 3) {
+      marks =
+        (correct[0] + correct[1] + correct[2]) * 4 -
+        (wrong[0] + wrong[1] + wrong[2])
+      if (test.exam == 'jee') {
+        student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        student.mathTime += time / 3
+        student.physicsAccuracy[0] +=
+          (correct[1] / (correct[1] + wrong[1])) * 100
+        student.physicsTime[0] += time / 3
+        student.chemistryAccuracy[0] +=
+          (correct[2] / (correct[2] + wrong[2])) * 100
+        student.chemistryTime[0] += time / 3
+        if (marks > student.topMarks[0]) {
+          student.topMarks = marks
+        }
+        student.averageMarks[0] += marks
+      } else {
+        marks =
+          (correct[0] + correct[1] + correct[2]) * 4 -
+          (wrong[0] + wrong[1] + wrong[2])
+        student.bioAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        student.bioTime += time / 3
+        student.physicsAccuracy[1] +=
+          (correct[1] / (correct[1] + wrong[1])) * 100
+        student.physicsTime[1] += time / 3
+        student.chemistryAccuracy[1] +=
+          (correct[2] / (correct[2] + wrong[2])) * 100
+        student.chemistryTime[1] += time / 3
+        if (marks > student.topMarks[1]) {
+          student.topMarks = marks
+        }
+        student.averageMarks[1] += marks
+      }
+    } else {
+      let index2
+      exam == 'jee' ? (index2 = 0) : (index2 = 1)
+      marks = correct[0] * 4 - wrong[0]
+      if (subject === 'math') {
+        student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        student.mathTime += time
+      } else if (subject === 'physics') {
+        student.physicsAccuracy[index2] +=
+          (correct[0] / (correct[0] + wrong[0])) * 100
+        student.physicsTime[index2] += time
+      } else if (subject === 'chemistry') {
+        student.chemistryAccuracy[index2] +=
+          (correct[0] / (correct[0] + wrong[0])) * 100
+        student.chemistryTime[index2] += time
+      } else if (subject === 'bio') {
+        student.bioAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        student.bioTime += time
+      }
+    }
+
+    student.results.push({
+      result: choosenOption,
+      testId: testId,
       date: new Date().toLocaleString(),
-      time:req.body.time
-    }])
-    const test = await Test.findById(req.body.testId).select('subject exam totalQuestions').exec()
-    if(test.subject.length==3){
-        
-    } 
+      time: time,
+      correct: correct,
+      wrong: wrong,
+      marks: marks,
+    })
+    console.log('the end', student, correct, wrong)
     await student.save()
     res.status(200).end()
   } catch (error) {

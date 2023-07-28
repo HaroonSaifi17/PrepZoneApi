@@ -13,8 +13,11 @@ const studentSchema = new mongoose.Schema({
   results: [{
     testId:String,
     date:String,
+    correct:[Number],
+    wrong:[Number],
     result:[Number],
-    time:[Number]
+    time:Number,
+    marks:Number
   }],
   default:{},
   topMarks: {
