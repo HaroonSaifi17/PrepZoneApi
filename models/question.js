@@ -14,6 +14,7 @@ const questionSchema = new mongoose.Schema({
     type: [String],
     required: true
   },
+  img:String,
   correctOption: {
     type: Number,
     required: true
@@ -25,6 +26,7 @@ const numericalSchema=new mongoose.Schema({
     enum: ['Easy', 'Medium', 'Hard'],
     required: true
   },
+  img:String,
   questionText: {
     type: String,
     required: true

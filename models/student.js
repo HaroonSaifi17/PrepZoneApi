@@ -10,10 +10,10 @@ const studentSchema = new mongoose.Schema({
   phoneNumber: String,
   profileImg: String,
   prep: String,
-  result: [{
-    id:mongoose.Schema.Types.ObjectId,
-    correct:[Number],
-    wrong:[Number],
+  results: [{
+    testId:String,
+    date:String,
+    result:[Number],
     time:[Number]
   }],
   default:{},

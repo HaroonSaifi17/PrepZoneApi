@@ -214,5 +214,43 @@ router.get('/getQuestion',authenticateJWT, async (req, res) => {
     res.status(404).json({ error: error.message })
   }
 })
+const nsubjectToModelMap = {
+  math: JMathNumQuestion,
+  physics: JPhysicsNumQuestion,
+  chmistry: JChemistryNumQuestion,
+}
+router.get('/getnQuestion',authenticateJWT, async (req, res) => {
+  try {
+    const { subject, exam, id } =
+      req.query
+    const Model = nsubjectToModelMap[subject][exam]
+    if (!Model) {
+      throw new Error('Invalid subject or exam type.')
+    }
+    const question = await Model.findById(id).select('questionText').exec()
+    res.send(question).end()
+  } catch (error) {
+    res.status(404).json({ error: error.message })
+  }
+})
+router.post('/result',authenticateJWT, async (req, res) => {
+  try {
+    let student = await Student.findById(req.user.userId).exec()
+    student.results.push([{
+      result:req.body.choosenOption,
+      testId:req.body.testId,
+      date: new Date().toLocaleString(),
+      time:req.body.time
+    }])
+    const test = await Test.findById(req.body.testId).select('subject exam totalQuestions').exec()
+    if(test.subject.length==3){
+        
+    } 
+    await student.save()
+    res.status(200).end()
+  } catch (error) {
+    res.status(404).json({ error: error.message })
+  }
+})
 
 module.exports = router

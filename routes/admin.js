@@ -90,10 +90,12 @@ router.get('/GeneratePaper', async (req, res) => {
 
     let mult = totalQuestions - num
     let questionIds = []
+    let subjects1=[]
 
     if (subject === 'all') {
       if (exam === 'jee') {
         const subjects = ['math', 'physics', 'chemistry']
+        subjects1=subjects
         for (let i = 0; i < 3; i++) {
           const mmodel = msubjectToModelMap[subjects[i]][exam]
           const nmodel = msubjectToModelMap[subjects[i]]
@@ -118,6 +120,7 @@ router.get('/GeneratePaper', async (req, res) => {
         }
       } else {
         const subjects = ['bio', 'physics', 'chemistry']
+        subjects1 = subjects
         for (let i = 0; i < 3; i++) {
           const model = msubjectToModelMap[subjects[i]][exam]
           if (!model) {
@@ -132,6 +135,7 @@ router.get('/GeneratePaper', async (req, res) => {
         }
       }
     } else {
+      subjects1[0]=subject
       const Model = msubjectToModelMap[subject][exam]
       if (!Model) {
         throw new Error('Invalid subject or exam type.')
@@ -153,8 +157,9 @@ router.get('/GeneratePaper', async (req, res) => {
 
     const paper = new Test({
       name: req.body.name,
-      subject: req.body.subject,
+      subject: subjects1,
       exam: req.body.exam,
+      num:req.body.num,
       totalQuestions: req.body.totalQuestions,
       date: new Date().toLocaleString(),
       questionIds,
