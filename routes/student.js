@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const Student = require('../models/student')
 const Test = require('../models/test')
-const path = require('path');
+const path = require('path')
 const {
   JPhysicsQuestion,
   JChemistryQuestion,
@@ -29,19 +29,16 @@ async function getStudentDataById(userId, fields) {
     throw new Error(error.message)
   }
 }
-router.get(
-  '/getImg/:url',
-  async (req, res) => {
-    try {
-      const fileUrl = req.params.url;
-    const filePath = path.join(__dirname, '../files/questionImages/', fileUrl);
-      console.log(filePath)
-      res.sendFile(filePath)
-    } catch (error) {
-      res.status(401).send(error.message).end()
-    }
+router.get('/getImg/:url', async (req, res) => {
+  try {
+    const fileUrl = req.params.url
+    const filePath = path.join(__dirname, '../files/questionImages/', fileUrl)
+    console.log(filePath)
+    res.sendFile(filePath)
+  } catch (error) {
+    res.status(401).send(error.message).end()
   }
-)
+})
 
 router.get('/profileImg', authenticateJWT, async (req, res) => {
   try {
@@ -234,13 +231,13 @@ const nsubjectToModelMap = {
 }
 const msubjectToModelMap = {
   math: {
-    jee:JMathQuestion,
+    jee: JMathQuestion,
   },
   bio: {
     neet: NBiologyQuestion,
   },
   physics: {
-    jee:JPhysicsQuestion,
+    jee: JPhysicsQuestion,
     neet: NPhysicsQuestion,
   },
   chemistry: {
@@ -262,79 +259,181 @@ router.post('/result', authenticateJWT, async (req, res) => {
     let exam = test.exam
     for (let i = 0; i < test.totalQuestions; i++) {
       if (test.subject.length == 3) {
-        if (i < test.totalQuestions / 2) {
-          index = 1
-          correct.push(0)
-          wrong.push(0)
+        let mul = test.totalQuestions - test.num
+        let first = mul / 3
+        let second = first + test.num / 3 + mul / 3
+        let third = second + test.num / 3 + mul / 3
+        if (i < test.totalQuestions / 3) {
+          if (i < first) {
+            const Model = msubjectToModelMap[subject][exam]
+            if (!Model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const question = await Model.findById(test.questionIds[i])
+              .select('correctOption')
+              .exec()
+            const selectedOption = choosenOption[i]
+            const correctOption = question.correctOption
+            if (selectedOption === correctOption) {
+              correct[index]++
+            } else if (selectedOption === 999) {
+            } else {
+              wrong[index]++
+            }
+          } else {
+            const Model = nsubjectToModelMap[subject]
+            if (!Model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const question = await Model.findById(test.questionIds[i])
+              .select('correctOption')
+              .exec()
+            const selectedOption = choosenOption[i]
+            const correctOption = question.correctOption
+            if (selectedOption === correctOption) {
+              correct[index]++
+            } else if (selectedOption === 999) {
+            } else {
+              wrong[index]++
+            }
+          }
         } else if (i < test.totalQuestions / 1.5) {
-          correct.push(0)
-          wrong.push(0)
-          index = 2
-        }
-      }
-      subject = test.subject[index]
-      if (i < test.totalQuestions - test.num) {
-        const Model = msubjectToModelMap[subject][exam]
-
-        if (!Model) {
-          throw new Error('Invalid subject or exam type.')
-        }
-        const question = await Model.findById(test.questionIds[i])
-          .select('correctOption')
-          .exec()
-
-        const selectedOption = choosenOption[i]
-        const correctOption = question.correctOption
-        if (selectedOption === correctOption) {
-          correct[index]++
-        } else if (selectedOption === 999) {
+          index = 1
+          subject = test.subject[index]
+          if (!correct[index]) {
+            correct[index] = 0
+            wrong[index] = 0
+          }
+          if (i < second) {
+            const Model = msubjectToModelMap[subject][exam]
+            if (!Model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const question = await Model.findById(test.questionIds[i])
+              .select('correctOption')
+              .exec()
+            const selectedOption = choosenOption[i]
+            const correctOption = question.correctOption
+            if (selectedOption === correctOption) {
+              correct[index]++
+            } else if (selectedOption === 999) {
+            } else {
+              wrong[index]++
+            }
+          } else {
+            const Model = nsubjectToModelMap[subject]
+            if (!Model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const question = await Model.findById(test.questionIds[i])
+              .select('correctOption')
+              .exec()
+            const selectedOption = choosenOption[i]
+            const correctOption = question.correctOption
+            if (selectedOption === correctOption) {
+              correct[index]++
+            } else if (selectedOption === 999) {
+            } else {
+              wrong[index]++
+            }
+          }
         } else {
-          wrong[index]++
-        }
-      } else {
-        if (test.subject.length == 3) {
-          if (i < test.totalQuestions / 2) {
-            index = 1
-            correct.push(0)
-            wrong.push(0)
-          } else if (i < test.totalQuestions / 1.5) {
-            correct.push(0)
-            wrong.push(0)
-            index = 2
+          index = 2
+          subject = test.subject[index]
+          if (!correct[index]) {
+            correct[index] = 0
+            wrong[index] = 0
+          }
+          if (i < third) {
+            const Model = msubjectToModelMap[subject][exam]
+            if (!Model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const question = await Model.findById(test.questionIds[i])
+              .select('correctOption')
+              .exec()
+            const selectedOption = choosenOption[i]
+            const correctOption = question.correctOption
+            if (selectedOption === correctOption) {
+              correct[index]++
+            } else if (selectedOption === 999) {
+            } else {
+              wrong[index]++
+            }
+          } else {
+            const Model = nsubjectToModelMap[subject]
+            if (!Model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const question = await Model.findById(test.questionIds[i])
+              .select('correctOption')
+              .exec()
+            const selectedOption = choosenOption[i]
+            const correctOption = question.correctOption
+            if (selectedOption === correctOption) {
+              correct[index]++
+            } else if (selectedOption === 999) {
+            } else {
+              wrong[index]++
+            }
           }
         }
-        subject = test.subject[index]
-        const Model = nsubjectToModelMap[subject]
-        if (!Model) {
-          throw new Error('Invalid subject or exam type.')
-        }
-        const question = await Model.findById(test.questionIds[i])
-          .select('correctOption')
-          .exec()
-        const selectedOption = choosenOption[i]
-        const correctOption = question.correctOption
-        if (selectedOption === correctOption) {
-          correct[index]++
-        } else if (selectedOption === 999) {
+      } else {
+        if (i < test.totalQuestions - test.num) {
+          const Model = msubjectToModelMap[subject][exam]
+          if (!Model) {
+            throw new Error('Invalid subject or exam type.')
+          }
+          const question = await Model.findById(test.questionIds[i])
+            .select('correctOption')
+            .exec()
+          const selectedOption = choosenOption[i]
+          const correctOption = question.correctOption
+          if (selectedOption === correctOption) {
+            correct[index]++
+          } else if (selectedOption === 999) {
+          } else {
+            wrong[index]++
+          }
         } else {
-          wrong[index]++
+          subject = test.subject[index]
+          const Model = nsubjectToModelMap[subject]
+          if (!Model) {
+            throw new Error('Invalid subject or exam type.')
+          }
+          const question = await Model.findById(test.questionIds[i])
+            .select('correctOption')
+            .exec()
+          const selectedOption = choosenOption[i]
+          const correctOption = question.correctOption
+          if (selectedOption === correctOption) {
+            correct[index]++
+          } else if (selectedOption === 999) {
+          } else {
+            wrong[index]++
+          }
         }
       }
     }
-
     let marks
     if (test.subject.length == 3) {
       marks =
         (correct[0] + correct[1] + correct[2]) * 4 -
         (wrong[0] + wrong[1] + wrong[2])
       if (test.exam == 'jee') {
-        student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        if (correct[0] + wrong[0] !== 0) {
+          student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        }
         student.mathTime += time / 3
-        student.physicsAccuracy[0] +=
-          (correct[1] / (correct[1] + wrong[1])) * 100
+        if (correct[1] + wrong[1] !== 0) {
+          student.physicsAccuracy[0] +=
+            (correct[1] / (correct[1] + wrong[1])) * 100
+        }
         student.physicsTime[0] += time / 3
-        student.chemistryAccuracy[0] +=
-          (correct[2] / (correct[2] + wrong[2])) * 100
+        if (correct[2] + wrong[2] !== 0) {
+          student.chemistryAccuracy[0] +=
+            (correct[2] / (correct[2] + wrong[2])) * 100
+        }
         student.chemistryTime[0] += time / 3
         if (marks > student.topMarks[0]) {
           student.topMarks = marks
@@ -344,13 +443,19 @@ router.post('/result', authenticateJWT, async (req, res) => {
         marks =
           (correct[0] + correct[1] + correct[2]) * 4 -
           (wrong[0] + wrong[1] + wrong[2])
-        student.bioAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        if (correct[0] + wrong[0] !== 0) {
+          student.bioAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        }
         student.bioTime += time / 3
-        student.physicsAccuracy[1] +=
-          (correct[1] / (correct[1] + wrong[1])) * 100
+        if (correct[1] + wrong[1] !== 0) {
+          student.physicsAccuracy[1] +=
+            (correct[1] / (correct[1] + wrong[1])) * 100
+        }
         student.physicsTime[1] += time / 3
-        student.chemistryAccuracy[1] +=
-          (correct[2] / (correct[2] + wrong[2])) * 100
+        if (correct[2] + wrong[2] !== 0) {
+          student.chemistryAccuracy[1] +=
+            (correct[2] / (correct[2] + wrong[2])) * 100
+        }
         student.chemistryTime[1] += time / 3
         if (marks > student.topMarks[1]) {
           student.topMarks = marks
@@ -361,19 +466,28 @@ router.post('/result', authenticateJWT, async (req, res) => {
       let index2
       exam == 'jee' ? (index2 = 0) : (index2 = 1)
       marks = correct[0] * 4 - wrong[0]
+      console.log('th')
       if (subject === 'math') {
-        student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        if (correct[0] + wrong[0] !== 0) {
+          student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        }
         student.mathTime += time
       } else if (subject === 'physics') {
-        student.physicsAccuracy[index2] +=
-          (correct[0] / (correct[0] + wrong[0])) * 100
+        if (correct[0] + wrong[0] !== 0) {
+          student.physicsAccuracy[index2] +=
+            (correct[0] / (correct[0] + wrong[0])) * 100
+        }
         student.physicsTime[index2] += time
       } else if (subject === 'chemistry') {
-        student.chemistryAccuracy[index2] +=
-          (correct[0] / (correct[0] + wrong[0])) * 100
+        if (correct[0] + wrong[0] !== 0) {
+          student.chemistryAccuracy[index2] +=
+            (correct[0] / (correct[0] + wrong[0])) * 100
+        }
         student.chemistryTime[index2] += time
       } else if (subject === 'bio') {
-        student.bioAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        if (correct[0] + wrong[0] !== 0) {
+          student.bioAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
+        }
         student.bioTime += time
       }
     }
@@ -387,7 +501,6 @@ router.post('/result', authenticateJWT, async (req, res) => {
       wrong: wrong,
       marks: marks,
     })
-    console.log('the end', student, correct, wrong)
     await student.save()
     res.status(200).end()
   } catch (error) {
