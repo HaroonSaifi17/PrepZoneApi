@@ -8,9 +8,9 @@ const {
   NBiologyQuestion,
   NPhysicsQuestion,
   NChemistryQuestion,
-  JMathNumQuestion,
-  JChemistryNumQuestion,
-  JPhysicsNumQuestion,
+  MathNumQuestion,
+  ChemistryNumQuestion,
+  PhysicsNumQuestion,
 } = require('../models/question')
 const passport = require('passport')
 
@@ -192,7 +192,7 @@ router.get('/getQuestion', authenticateJWT, async (req, res) => {
       throw new Error('Invalid subject or exam type.')
     }
     const question = await Model.findById(id)
-      .select('questionText options')
+      .select('questionText options img')
       .exec()
     res.send(question).end()
   } catch (error) {
@@ -206,7 +206,7 @@ router.get('/getnQuestion', authenticateJWT, async (req, res) => {
     if (!Model) {
       throw new Error('Invalid subject or exam type.')
     }
-    const question = await Model.findById(id).select('questionText').exec()
+    const question = await Model.findById(id).select('questionText img').exec()
     res.send(question).end()
   } catch (error) {
     res.status(404).json({ error: error.message })
@@ -214,19 +214,19 @@ router.get('/getnQuestion', authenticateJWT, async (req, res) => {
 })
 
 const nsubjectToModelMap = {
-  math: JMathNumQuestion,
-  physics: JPhysicsNumQuestion,
-  chmistry: JChemistryNumQuestion,
+  math: MathNumQuestion,
+  physics: PhysicsNumQuestion,
+  chmistry: ChemistryNumQuestion,
 }
 const msubjectToModelMap = {
   math: {
-    jee: NPhysicsQuestion.JMathQuestion,
+    jee:JMathQuestion,
   },
   bio: {
     neet: NBiologyQuestion,
   },
   physics: {
-    jee: NPhysicsQuestion.JPhysicsQuestion,
+    jee:JPhysicsQuestion,
     neet: NPhysicsQuestion,
   },
   chemistry: {

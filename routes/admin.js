@@ -5,15 +5,16 @@ const {
   NBiologyQuestion,
   NPhysicsQuestion,
   NChemistryQuestion,
-  JMathNumQuestion,
-  JChemistryNumQuestion,
-  JPhysicsNumQuestion,
+  MathNumQuestion,
+  ChemistryNumQuestion,
+  PhysicsNumQuestion,
 } = require('../models/question')
 
 const Test = require('../models/test')
 const router = require('express').Router()
 
 async function getRandomQuestions(Model, difficulty, num) {
+  console.log(Model,difficulty,num)
   return await Model.aggregate([
     { $match: { difficulty: { $eq: difficulty } } },
     { $sample: { size: num } }
@@ -21,8 +22,8 @@ async function getRandomQuestions(Model, difficulty, num) {
 }
 
 const msubjectToModelMap = {
-  math: JMathQuestion,
-  bio: NBiologyQuestion,
+  math:{jee: JMathQuestion},
+  bio: {neet:NBiologyQuestion},
   physics: {
     jee: JPhysicsQuestion,
     neet: NPhysicsQuestion,
@@ -33,12 +34,32 @@ const msubjectToModelMap = {
   },
 }
 const nsubjectToModelMap = {
-  math: JMathNumQuestion,
-  physics: JPhysicsNumQuestion,
-  chmistry: JChemistryNumQuestion,
+  math: MathNumQuestion,
+  physics: PhysicsNumQuestion,
+  chemistry: ChemistryNumQuestion,
 }
+const multer = require('multer')
+const fs = require('fs')
+let imgName
 
-router.post('/addMQuestion', async (req, res) => {
+const storage1 = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './files/questionImages')
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+    let ext = file.originalname.substring(
+      file.originalname.lastIndexOf('.'),
+      file.originalname.length
+    )
+    imgName = file.fieldname + '-' + uniqueSuffix + ext
+    cb(null, imgName)
+  },
+})
+
+const upload1 = multer({ storage: storage1 })
+
+router.post('/addMQuestion',upload1.single('img'), async (req, res) => {
   try {
     const { subject, exam, difficulty, questionText, options, correctOption } =
       req.body
@@ -53,6 +74,7 @@ router.post('/addMQuestion', async (req, res) => {
       questionText,
       options,
       correctOption,
+      img:imgName
     })
 
     await question.save()
@@ -62,7 +84,7 @@ router.post('/addMQuestion', async (req, res) => {
   }
 })
 
-router.post('/addNQuestion', async (req, res) => {
+router.post('/addNQuestion',upload1.single('img'), async (req, res) => {
   try {
     const { subject, difficulty, questionText, correctOption } = req.body
 
@@ -75,6 +97,7 @@ router.post('/addNQuestion', async (req, res) => {
       difficulty,
       questionText,
       correctOption,
+      img:imgName
     })
 
     await question.save()
@@ -98,13 +121,13 @@ router.get('/GeneratePaper', async (req, res) => {
         subjects1=subjects
         for (let i = 0; i < 3; i++) {
           const mmodel = msubjectToModelMap[subjects[i]][exam]
-          const nmodel = msubjectToModelMap[subjects[i]]
+          const nmodel = nsubjectToModelMap[subjects[i]]
           if (!mmodel && !nmodel) {
             throw new Error('Invalid subject or exam type.')
           }
 
           const mquestions = await getRandomQuestions(
-            nmodel,
+            mmodel,
             difficulty,
             mult / 3
           )
@@ -146,7 +169,7 @@ router.get('/GeneratePaper', async (req, res) => {
 
       if (exam === 'jee') {
         const nModel =
-          nsubjectToModelMap[subject][exam]
+          nsubjectToModelMap[subject]
         if (!nModel) {
           throw new Error('Invalid subject or exam type.')
         }
@@ -154,7 +177,6 @@ router.get('/GeneratePaper', async (req, res) => {
         questionIds = questionIds.concat(nQuestions.map((item) => item._id))
       }
     }
-
     const paper = new Test({
       name: req.body.name,
       subject: subjects1,
