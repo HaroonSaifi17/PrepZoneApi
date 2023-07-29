@@ -14,7 +14,6 @@ const Test = require('../models/test')
 const router = require('express').Router()
 
 async function getRandomQuestions(Model, difficulty, num) {
-  console.log(Model,difficulty,num)
   return await Model.aggregate([
     { $match: { difficulty: { $eq: difficulty } } },
     { $sample: { size: num } }

@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const Student = require('../models/student')
 const Test = require('../models/test')
+const path = require('path');
 const {
   JPhysicsQuestion,
   JChemistryQuestion,
@@ -28,6 +29,19 @@ async function getStudentDataById(userId, fields) {
     throw new Error(error.message)
   }
 }
+router.get(
+  '/getImg/:url',
+  async (req, res) => {
+    try {
+      const fileUrl = req.params.url;
+    const filePath = path.join(__dirname, '../files/questionImages/', fileUrl);
+      console.log(filePath)
+      res.sendFile(filePath)
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
 
 router.get('/profileImg', authenticateJWT, async (req, res) => {
   try {
@@ -133,7 +147,7 @@ router.get('/getTests', authenticateJWT, async (req, res) => {
     let sort = parseInt(req.query.sort) || -1
     let genre = req.query.subject || 'All'
     let pageno = [1]
-    const genreOptions = ['physics', 'chemistry', 'math', 'biology']
+    const genreOptions = ['physics', 'chemistry', 'math', 'bio']
 
     genre === 'All'
       ? (genre = [...genreOptions])
@@ -201,8 +215,8 @@ router.get('/getQuestion', authenticateJWT, async (req, res) => {
 })
 router.get('/getnQuestion', authenticateJWT, async (req, res) => {
   try {
-    const { subject, exam, id } = req.query
-    const Model = nsubjectToModelMap[subject][exam]
+    const { subject, id } = req.query
+    const Model = nsubjectToModelMap[subject]
     if (!Model) {
       throw new Error('Invalid subject or exam type.')
     }
@@ -216,7 +230,7 @@ router.get('/getnQuestion', authenticateJWT, async (req, res) => {
 const nsubjectToModelMap = {
   math: MathNumQuestion,
   physics: PhysicsNumQuestion,
-  chmistry: ChemistryNumQuestion,
+  chemistry: ChemistryNumQuestion,
 }
 const msubjectToModelMap = {
   math: {

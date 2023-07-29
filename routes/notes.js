@@ -44,7 +44,6 @@ router.get(
     try {
       const fileUrl = req.params.url;
     const filePath = path.join(__dirname, '../files/pdf/', fileUrl);
-      console.log(filePath)
       res.sendFile(filePath)
     } catch (error) {
       res.status(401).send(error.message).end()
