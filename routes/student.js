@@ -110,14 +110,14 @@ router.get('/neetData', authenticateJWT, async (req, res) => {
     )
     const data1 = {
       name: data.name,
-      topMarks: data.topMarks[0],
-      averageMarks: data.averageMarks[0],
-      physicsAccuracy: data.physicsAccuracy[0],
-      chemistryAccuracy: data.chemistryAccuracy[0],
+      topMarks: data.topMarks[1],
+      averageMarks: data.averageMarks[1],
+      physicsAccuracy: data.physicsAccuracy[1],
+      chemistryAccuracy: data.chemistryAccuracy[1],
       bioAccuracy: data.bioAccuracy,
       bioTime: data.bioTime,
-      chemistryTime: data.chemistryAccuracy[0],
-      physicsTime: data.physicsAccuracy[0],
+      chemistryTime: data.chemistryAccuracy[1],
+      physicsTime: data.physicsAccuracy[1],
     }
     res.json(data1)
   } catch (error) {
