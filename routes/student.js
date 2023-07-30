@@ -250,7 +250,7 @@ router.post('/result', authenticateJWT, async (req, res) => {
     let student = await Student.findById(req.user.userId).exec()
     const { choosenOption, testId, time } = req.body
     const test = await Test.findById(testId)
-      .select('subject exam totalQuestions questionIds num')
+      .select('subject exam totalQuestions questionIds num name')
       .exec()
     let correct = [0]
     let wrong = [0]
@@ -436,7 +436,7 @@ router.post('/result', authenticateJWT, async (req, res) => {
         }
         student.chemistryTime[0] += time / 3
         if (marks > student.topMarks[0]) {
-          student.topMarks = marks
+          student.topMarks[0] = marks
         }
         student.averageMarks[0] += marks
       } else {
@@ -458,7 +458,7 @@ router.post('/result', authenticateJWT, async (req, res) => {
         }
         student.chemistryTime[1] += time / 3
         if (marks > student.topMarks[1]) {
-          student.topMarks = marks
+          student.topMarks[1] = marks
         }
         student.averageMarks[1] += marks
       }
@@ -466,7 +466,6 @@ router.post('/result', authenticateJWT, async (req, res) => {
       let index2
       exam == 'jee' ? (index2 = 0) : (index2 = 1)
       marks = correct[0] * 4 - wrong[0]
-      console.log('th')
       if (subject === 'math') {
         if (correct[0] + wrong[0] !== 0) {
           student.mathAccuracy += (correct[0] / (correct[0] + wrong[0])) * 100
@@ -500,12 +499,62 @@ router.post('/result', authenticateJWT, async (req, res) => {
       correct: correct,
       wrong: wrong,
       marks: marks,
+      subject: test.subject,
+      name: test.name,
     })
     await student.save()
-    res.status(200).end()
+    res.send({id:student._id}).status(200).end()
   } catch (error) {
     res.status(404).json({ error: error.message })
   }
 })
 
+router.get('/getResultList', authenticateJWT, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) - 1 || 0
+    const limit = parseInt(req.query.limit) || 10
+    const search = req.query.search || ''
+    let sort = parseInt(req.query.sort) || -1
+    let genre = req.query.subject || 'All'
+    let pageno = [1]
+    const genreOptions = ['physics', 'chemistry', 'math', 'bio']
+
+    genre === 'All'
+      ? (genre = [...genreOptions])
+      : (genre = req.query.subject.split(','))
+
+    const student = await Student.findById(req.user.userId)
+      .select('results')
+      .lean()
+      .exec()
+    const results = student.results
+      .filter(
+        (result) =>
+          result.name.match(new RegExp(search, 'i')) &&
+          result.subject.some((subject) => genre.includes(subject))
+      )
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(page * limit, (page + 1) * limit)
+    .map(({ _id, name, date,marks }) => ({ _id, name, date ,marks}));
+
+    const total = results.length
+    let totalpage = total / limit
+    if (totalpage > 1) {
+      for (let i = 1; i < totalpage; i++) {
+        pageno.push(i + 1)
+      }
+    }
+    const response = {
+      error: false,
+      total,
+      page: page + 1,
+      limit,
+      results,
+      pageno,
+    }
+    res.status(200).json(response)
+  } catch (error) {
+    res.status(401).send(error.message).end()
+  }
+})
 module.exports = router

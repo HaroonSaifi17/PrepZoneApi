@@ -17,7 +17,9 @@ const studentSchema = new mongoose.Schema({
     wrong:[Number],
     result:[Number],
     time:Number,
-    marks:Number
+    marks:Number,
+    subject:[String],
+    name:String
   }],
   default:{},
   topMarks: {
