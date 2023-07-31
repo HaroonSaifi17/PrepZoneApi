@@ -113,6 +113,7 @@ router.get('/GeneratePaper', async (req, res) => {
     let mult = totalQuestions - num
     let questionIds = []
     let subjects1=[]
+    let answers=[]
 
     if (subject === 'all') {
       if (exam === 'jee') {
@@ -139,6 +140,10 @@ router.get('/GeneratePaper', async (req, res) => {
             mquestions.map((item) => item._id),
             nquestions.map((item) => item._id)
           )
+          answers =answers.concat(
+            mquestions.map((item) => item.correctOption),
+            nquestions.map((item) => item.correctOption)
+          )
         }
       } else {
         const subjects = ['bio', 'physics', 'chemistry']
@@ -154,6 +159,9 @@ router.get('/GeneratePaper', async (req, res) => {
             mult / 3
           )
           questionIds = questionIds.concat(questions.map((item) => item._id))
+          answers =answers.concat(
+            questions.map((item) => item.correctOption),
+          )
         }
       }
     } else {
@@ -165,6 +173,7 @@ router.get('/GeneratePaper', async (req, res) => {
 
       const mQuestions = await getRandomQuestions(Model, difficulty, mult)
       questionIds = mQuestions.map((item) => item._id)
+          answers = mQuestions.map((item) => item.correctOption)
 
       if (exam === 'jee') {
         const nModel =
@@ -174,6 +183,7 @@ router.get('/GeneratePaper', async (req, res) => {
         }
         const nQuestions = await getRandomQuestions(nModel, difficulty, num)
         questionIds = questionIds.concat(nQuestions.map((item) => item._id))
+        answers = answers.concat(nQuestions.map((item) => item.correctOption))
       }
     }
     const paper = new Test({
@@ -184,6 +194,7 @@ router.get('/GeneratePaper', async (req, res) => {
       totalQuestions: req.body.totalQuestions,
       date: new Date().toLocaleString(),
       questionIds,
+      answers:answers
     })
 
     await paper.save()

@@ -19,6 +19,7 @@ const subtestSchema = new mongoose.Schema({
   },
   date:String,
   num:Number,
+  answers:[Number],
   questionIds: [
     {
       type: mongoose.Schema.Types.ObjectId,
