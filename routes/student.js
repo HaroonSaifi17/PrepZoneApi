@@ -33,7 +33,6 @@ router.get('/getImg/:url', async (req, res) => {
   try {
     const fileUrl = req.params.url
     const filePath = path.join(__dirname, '../files/questionImages/', fileUrl)
-    console.log(filePath)
     res.sendFile(filePath)
   } catch (error) {
     res.status(401).send(error.message).end()
@@ -290,12 +289,12 @@ router.post('/result', authenticateJWT, async (req, res) => {
         student.mathTime += time / test.totalQuestions
         if (correct[1] + wrong[1] !== 0) {
           student.physicsAccuracy[0] =
-            ( student.physicsAccuracy + (correct[1] / (correct[1] + wrong[1])) * 100)/2
+            ( student.physicsAccuracy[0] + (correct[1] / (correct[1] + wrong[1])) * 100)/2
         }
         student.physicsTime[0] += time / test.totalQuestions
         if (correct[2] + wrong[2] !== 0) {
           student.chemistryAccuracy[0] =
-            (student.chemistryAccuracy +  (correct[2] / (correct[2] + wrong[2])) * 100)/2
+            (student.chemistryAccuracy[0] +  (correct[2] / (correct[2] + wrong[2])) * 100)/2
         }
         student.chemistryTime[0] += time / test.totalQuestions
         if (marks > student.topMarks[0]) {
@@ -304,7 +303,7 @@ router.post('/result', authenticateJWT, async (req, res) => {
         student.averageMarks[0] += marks
       } else {
         marks =
-          (correct[0] + correct[1] + correct[2]) * 4 -
+          ((correct[0] + correct[1] + correct[2]) * 4) -
           (wrong[0] + wrong[1] + wrong[2])
         if (correct[0] + wrong[0] !== 0) {
           student.bioAccuracy = ( student.bioAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
@@ -312,12 +311,12 @@ router.post('/result', authenticateJWT, async (req, res) => {
         student.bioTime += time / test.totalQuestions
         if (correct[1] + wrong[1] !== 0) {
           student.physicsAccuracy[1] =
-            ( student.physicsAccuracy + (correct[1] / (correct[1] + wrong[1])) * 100)/2
+            ( student.physicsAccuracy[0] + (correct[1] / (correct[1] + wrong[1])) * 100)/2
         }
         student.physicsTime[1] += time / test.totalQuestions
         if (correct[2] + wrong[2] !== 0) {
           student.chemistryAccuracy[1] =
-            (student.chemistryAccuracy + (correct[2] / (correct[2] + wrong[2])) * 100)/2
+            (student.chemistryAccuracy[0] + (correct[2] / (correct[2] + wrong[2])) * 100)/2
         }
         student.chemistryTime[1] += time / test.totalQuestions
         if (marks > student.topMarks[1]) {
@@ -327,26 +326,26 @@ router.post('/result', authenticateJWT, async (req, res) => {
       }
     } else {
       let index2
-      exam == 'jee' ? (index2 = 0) : (index2 = 1)
-      marks = correct[0] * 4 - wrong[0]
-      if (subject === 'math') {
+      test.exam == 'jee' ? (index2 = 0) : (index2 = 1)
+      marks = (correct[0] * 4)- wrong[0]
+      if (test.subject[0] === 'math') {
         if (correct[0] + wrong[0] !== 0) {
           student.mathAccuracy = (student.mathAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
         }
-        student.mathTime += time/test.totalQuestions
-      } else if (subject === 'physics') {
+        student.mathTime[0] += time/test.totalQuestions
+      } else if (test.subject[0] === 'physics') {
         if (correct[0] + wrong[0] !== 0) {
           student.physicsAccuracy[index2] =
-            (student.physicsAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+            (student.physicsAccuracy[index2] + (correct[0] / (correct[0] + wrong[0])) * 100)/2
         }
         student.physicsTime[index2] += time/test.totalQuestions
-      } else if (subject === 'chemistry') {
+      } else if (test.subject[0] === 'chemistry') {
         if (correct[0] + wrong[0] !== 0) {
           student.chemistryAccuracy[index2] =
-            (student.chemistryAccuracy +(correct[0] / (correct[0] + wrong[0])) * 100)/2
+            (student.chemistryAccuracy[index2] +(correct[0] / (correct[0] + wrong[0])) * 100)/2
         }
         student.chemistryTime[index2] += time/test.totalQuestions
-      } else if (subject === 'bio') {
+      } else if (test.subject[0] === 'bio') {
         if (correct[0] + wrong[0] !== 0) {
           student.bioAccuracy = (student.bioAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
         }
