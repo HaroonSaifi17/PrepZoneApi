@@ -22,4 +22,17 @@ router.get(
    }
   }
 )
+router.post(
+  '/admin',
+  passport.authenticate('local',{session:false}),(req,res)=>{
+   try {
+      const token = jwt.sign({username:req.user.username },process.env.JWT_ADMIN_SECRET,{
+      expiresIn: '10h' 
+    })
+      res.send({adminToken:token}).end();
+   } catch (error) {
+    res.status(401).send(error).end()
+   }
+  }
+)
 module.exports = router

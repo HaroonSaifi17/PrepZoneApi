@@ -38,7 +38,8 @@ const nsubjectToModelMap = {
   chemistry: ChemistryNumQuestion,
 }
 const multer = require('multer')
-const fs = require('fs')
+const fs = require('fs');
+const passport = require('passport');
 let imgName
 
 const storage1 = multer.diskStorage({
@@ -105,6 +106,7 @@ router.post('/addNQuestion',upload1.single('img'), async (req, res) => {
     res.status(401).send(error.message).end()
   }
 })
+
 
 router.get('/GeneratePaper', async (req, res) => {
   try {

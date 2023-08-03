@@ -284,18 +284,27 @@ router.post('/result', authenticateJWT, async (req, res) => {
         (wrong[0] + wrong[1] + wrong[2])
       if (test.exam == 'jee') {
         if (correct[0] + wrong[0] !== 0) {
+          if(student.mathAccuracy==0){
+          student.mathAccuracy = (correct[0] / (correct[0] + wrong[0])) * 100
+          }
+          else(
           student.mathAccuracy = (student.mathAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+          )
+          if(student.physicsAccuracy[0]==0){
+          student.physicsAccuracy[0] = (correct[1] / (correct[1] + wrong[1])) * 100
+          }
+          else(
+          student.physicsAccuracy[0] = (student.physicsAccuracy[0] + (correct[1] / (correct[1] + wrong[1])) * 100)/2
+          )
+          if(student.chemistryAccuracy[0]==0){
+          student.chemistryAccuracy[0] = (correct[2] / (correct[2] + wrong[2])) * 100
+          }
+          else(
+          student.chemistryAccuracy[0] = (student.chemistryAccuracy[0]+ (correct[2] / (correct[2] + wrong[2])) * 100)/2
+          )
         }
         student.mathTime += time / test.totalQuestions
-        if (correct[1] + wrong[1] !== 0) {
-          student.physicsAccuracy[0] =
-            ( student.physicsAccuracy[0] + (correct[1] / (correct[1] + wrong[1])) * 100)/2
-        }
         student.physicsTime[0] += time / test.totalQuestions
-        if (correct[2] + wrong[2] !== 0) {
-          student.chemistryAccuracy[0] =
-            (student.chemistryAccuracy[0] +  (correct[2] / (correct[2] + wrong[2])) * 100)/2
-        }
         student.chemistryTime[0] += time / test.totalQuestions
         if (marks > student.topMarks[0]) {
           student.topMarks[0] = marks
@@ -306,18 +315,27 @@ router.post('/result', authenticateJWT, async (req, res) => {
           ((correct[0] + correct[1] + correct[2]) * 4) -
           (wrong[0] + wrong[1] + wrong[2])
         if (correct[0] + wrong[0] !== 0) {
-          student.bioAccuracy = ( student.bioAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+          if(student.mathAccuracy==0){
+          student.bioAccuracy = (correct[0] / (correct[0] + wrong[0])) * 100
+          }
+          else(
+          student.bioAccuracy = (student.mathAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+          )
+          if(student.physicsAccuracy[1]==0){
+          student.physicsAccuracy[1] = (correct[1] / (correct[1] + wrong[1])) * 100
+          }
+          else(
+          student.physicsAccuracy[1] = (student.physicsAccuracy[1] + (correct[1] / (correct[1] + wrong[1])) * 100)/2
+          )
+          if(student.chemistryAccuracy[1]==0){
+          student.chemistryAccuracy[1] = (correct[2] / (correct[2] + wrong[2])) * 100
+          }
+          else(
+          student.chemistryAccuracy[1] = (student.chemistryAccuracy[1]+ (correct[2] / (correct[2] + wrong[2])) * 100)/2
+          )
         }
         student.bioTime += time / test.totalQuestions
-        if (correct[1] + wrong[1] !== 0) {
-          student.physicsAccuracy[1] =
-            ( student.physicsAccuracy[0] + (correct[1] / (correct[1] + wrong[1])) * 100)/2
-        }
         student.physicsTime[1] += time / test.totalQuestions
-        if (correct[2] + wrong[2] !== 0) {
-          student.chemistryAccuracy[1] =
-            (student.chemistryAccuracy[0] + (correct[2] / (correct[2] + wrong[2])) * 100)/2
-        }
         student.chemistryTime[1] += time / test.totalQuestions
         if (marks > student.topMarks[1]) {
           student.topMarks[1] = marks
@@ -330,24 +348,44 @@ router.post('/result', authenticateJWT, async (req, res) => {
       marks = (correct[0] * 4)- wrong[0]
       if (test.subject[0] === 'math') {
         if (correct[0] + wrong[0] !== 0) {
+          if(student.mathAccuracy==0){
+          student.mathAccuracy =  (correct[0] / (correct[0] + wrong[0])) * 100
+          }
+          else{
           student.mathAccuracy = (student.mathAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+          }
         }
         student.mathTime[0] += time/test.totalQuestions
       } else if (test.subject[0] === 'physics') {
         if (correct[0] + wrong[0] !== 0) {
+          if(student.physicsAccuracy[index2]==0){
+          student.physicsAccuracy[index2] =  (correct[0] / (correct[0] + wrong[0])) * 100
+          }
+          else{
           student.physicsAccuracy[index2] =
             (student.physicsAccuracy[index2] + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+          }
         }
         student.physicsTime[index2] += time/test.totalQuestions
       } else if (test.subject[0] === 'chemistry') {
         if (correct[0] + wrong[0] !== 0) {
+          if(student.chemistryAccuracy[index2]==0){
+          student.chemistryAccuracy[index2] =  (correct[0] / (correct[0] + wrong[0])) * 100
+          }
+          else{
           student.chemistryAccuracy[index2] =
             (student.chemistryAccuracy[index2] +(correct[0] / (correct[0] + wrong[0])) * 100)/2
+          }
         }
         student.chemistryTime[index2] += time/test.totalQuestions
       } else if (test.subject[0] === 'bio') {
         if (correct[0] + wrong[0] !== 0) {
+          if(student.bioAccuracy==0){
+          student.bioAccuracy =  (correct[0] / (correct[0] + wrong[0])) * 100
+          }
+          else{
           student.bioAccuracy = (student.bioAccuracy + (correct[0] / (correct[0] + wrong[0])) * 100)/2
+          }
         }
         student.bioTime += time/test.totalQuestions
       }
