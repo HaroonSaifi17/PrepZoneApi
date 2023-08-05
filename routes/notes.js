@@ -22,7 +22,9 @@ const storage = multer.diskStorage({
   },
 })
 
-const upload = multer({ storage: storage })
+const upload = multer({ storage: storage ,limits: {
+    fileSize: 10 * 1024 * 1024, 
+  }})
 router.post('/', upload.single('pdf'), async (req, res) => {
   try {
     const pdf = new Pdf({

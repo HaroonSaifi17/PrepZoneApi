@@ -57,7 +57,9 @@ const storage1 = multer.diskStorage({
   },
 })
 
-const upload1 = multer({ storage: storage1 })
+const upload1 = multer({ storage: storage1 ,limits: {
+    fileSize: 10 * 1024 * 1024, 
+  }})
 
 router.get('/check',passport.authenticate('adminJwt', { session: false }), async (req, res) => {
   try {
@@ -75,6 +77,7 @@ router.post('/addMQuestion',passport.authenticate('adminJwt',{session:false}),up
     if (!Model) {
       throw new Error('Invalid subject or exam type.')
     }
+    console.log(req.file)
     const question = new Model({
       difficulty,
       questionText,
@@ -82,7 +85,7 @@ router.post('/addMQuestion',passport.authenticate('adminJwt',{session:false}),up
       correctOption,
       img:imgName
     })
-    await question.save()
+    // await question.save()
     res.status(200).end()
   } catch (error) {
     res.status(401).send(error.message).end()
