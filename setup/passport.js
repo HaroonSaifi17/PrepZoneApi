@@ -47,7 +47,7 @@ var options = {
   secretOrKey: process.env.JWT_SECRET,
 }
 var adminOptions = {
-  jwtFromRequest: ExtractJwt.fromHeader('AdminToken'),
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_ADMIN_SECRET,
 }
 passport.use('jwt',

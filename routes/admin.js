@@ -59,16 +59,22 @@ const storage1 = multer.diskStorage({
 
 const upload1 = multer({ storage: storage1 })
 
-router.post('/addMQuestion',upload1.single('img'), async (req, res) => {
+router.get('/check',passport.authenticate('adminJwt', { session: false }), async (req, res) => {
+  try {
+    res.send({check:true}).status(200).end()
+  } catch (error) {
+    res.status(401).send(error.message).end()
+  }
+  })
+
+router.post('/addMQuestion',passport.authenticate('adminJwt',{session:false}),upload1.single('img'), async (req, res) => {
   try {
     const { subject, exam, difficulty, questionText, options, correctOption } =
       req.body
-
     const Model = msubjectToModelMap[subject][exam]
     if (!Model) {
       throw new Error('Invalid subject or exam type.')
     }
-
     const question = new Model({
       difficulty,
       questionText,
@@ -76,7 +82,6 @@ router.post('/addMQuestion',upload1.single('img'), async (req, res) => {
       correctOption,
       img:imgName
     })
-
     await question.save()
     res.status(200).end()
   } catch (error) {
@@ -84,7 +89,7 @@ router.post('/addMQuestion',upload1.single('img'), async (req, res) => {
   }
 })
 
-router.post('/addNQuestion',upload1.single('img'), async (req, res) => {
+router.post('/addNQuestion',passport.authenticate('adminJwt', { session: false }), async (req, res) => {
   try {
     const { subject, difficulty, questionText, correctOption } = req.body
 
@@ -100,7 +105,6 @@ router.post('/addNQuestion',upload1.single('img'), async (req, res) => {
       img:imgName
     })
 
-    await question.save()
     res.status(200).end()
   } catch (error) {
     res.status(401).send(error.message).end()

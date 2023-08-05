@@ -6,6 +6,7 @@ router.get(
   '/',
   passport.authenticate('google', { scope: ['email', 'profile'],session:false })
 )
+
 router.get(
   '/callback',
   passport.authenticate('google', {
