@@ -16,13 +16,13 @@ const router = require('express').Router()
 async function getRandomQuestions(Model, difficulty, num) {
   return await Model.aggregate([
     { $match: { difficulty: { $eq: difficulty } } },
-    { $sample: { size: num } }
-  ]).exec();
+    { $sample: { size: num } },
+  ]).exec()
 }
 
 const msubjectToModelMap = {
-  math:{jee: JMathQuestion},
-  bio: {neet:NBiologyQuestion},
+  math: { jee: JMathQuestion },
+  bio: { neet: NBiologyQuestion },
   physics: {
     jee: JPhysicsQuestion,
     neet: NPhysicsQuestion,
@@ -38,9 +38,8 @@ const nsubjectToModelMap = {
   chemistry: ChemistryNumQuestion,
 }
 const multer = require('multer')
-const fs = require('fs');
-const passport = require('passport');
-let imgName
+const fs = require('fs')
+const passport = require('passport')
 
 const storage1 = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -52,68 +51,97 @@ const storage1 = multer.diskStorage({
       file.originalname.lastIndexOf('.'),
       file.originalname.length
     )
-    imgName = file.fieldname + '-' + uniqueSuffix + ext
+    let imgName = file.fieldname + '-' + uniqueSuffix + ext
     cb(null, imgName)
   },
 })
 
-const upload1 = multer({ storage: storage1 ,limits: {
-    fileSize: 10 * 1024 * 1024, 
-  }})
-
-router.get('/check',passport.authenticate('adminJwt', { session: false }), async (req, res) => {
-  try {
-    res.send({check:true}).status(200).end()
-  } catch (error) {
-    res.status(401).send(error.message).end()
-  }
-  })
-
-router.post('/addMQuestion',passport.authenticate('adminJwt',{session:false}),upload1.single('img'), async (req, res) => {
-  try {
-    const { subject, exam, difficulty, questionText, options, correctOption } =
-      req.body
-    const Model = msubjectToModelMap[subject][exam]
-    if (!Model) {
-      throw new Error('Invalid subject or exam type.')
-    }
-    console.log(req.file)
-    const question = new Model({
-      difficulty,
-      questionText,
-      options,
-      correctOption,
-      img:imgName
-    })
-    // await question.save()
-    res.status(200).end()
-  } catch (error) {
-    res.status(401).send(error.message).end()
-  }
+const upload1 = multer({
+  storage: storage1,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
 })
 
-router.post('/addNQuestion',passport.authenticate('adminJwt', { session: false }), async (req, res) => {
-  try {
-    const { subject, difficulty, questionText, correctOption } = req.body
-
-    const Model = nsubjectToModelMap[subject]
-    if (!Model) {
-      throw new Error('Invalid subject')
+router.get(
+  '/check',
+  passport.authenticate('adminJwt', { session: false }),
+  async (req, res) => {
+    try {
+      res.send({ check: true }).status(200).end()
+    } catch (error) {
+      res.status(401).send(error.message).end()
     }
-
-    const question = new Model({
-      difficulty,
-      questionText,
-      correctOption,
-      img:imgName
-    })
-
-    res.status(200).end()
-  } catch (error) {
-    res.status(401).send(error.message).end()
   }
-})
+)
 
+router.post(
+  '/addMQuestion',
+  passport.authenticate('adminJwt', { session: false }),
+  upload1.single('img'),
+  async (req, res) => {
+    try {
+      const {
+        subject,
+        exam,
+        difficulty,
+        questionText,
+        options,
+        correctOption,
+      } = req.body
+      const Model = msubjectToModelMap[subject][exam]
+      if (!Model) {
+        throw new Error('Invalid subject or exam type.')
+      }
+      let name = ''
+      if (req.file != undefined) {
+        name = req.file.filename
+      }
+      const question = new Model({
+        difficulty,
+        questionText,
+        options,
+        correctOption,
+        img: name,
+      })
+      await question.save()
+      res.status(200).end()
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
+
+router.post(
+  '/addNQuestion',
+  passport.authenticate('adminJwt', { session: false }),
+  upload1.single('img'),
+  async (req, res) => {
+    try {
+      const { subject, difficulty, questionText, correctOption } = req.body
+
+      const Model = nsubjectToModelMap[subject]
+      if (!Model) {
+        throw new Error('Invalid subject')
+      }
+      let name = ''
+      if (req.file != undefined) {
+        name = req.file.filename
+      }
+
+      const question = new Model({
+        difficulty,
+        questionText,
+        correctOption,
+        img: name,
+      })
+      await question.save()
+      res.status(200).end()
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
 
 router.get('/GeneratePaper', async (req, res) => {
   try {
@@ -121,13 +149,13 @@ router.get('/GeneratePaper', async (req, res) => {
 
     let mult = totalQuestions - num
     let questionIds = []
-    let subjects1=[]
-    let answers=[]
+    let subjects1 = []
+    let answers = []
 
     if (subject === 'all') {
       if (exam === 'jee') {
         const subjects = ['math', 'physics', 'chemistry']
-        subjects1=subjects
+        subjects1 = subjects
         for (let i = 0; i < 3; i++) {
           const mmodel = msubjectToModelMap[subjects[i]][exam]
           const nmodel = nsubjectToModelMap[subjects[i]]
@@ -149,7 +177,7 @@ router.get('/GeneratePaper', async (req, res) => {
             mquestions.map((item) => item._id),
             nquestions.map((item) => item._id)
           )
-          answers =answers.concat(
+          answers = answers.concat(
             mquestions.map((item) => item.correctOption),
             nquestions.map((item) => item.correctOption)
           )
@@ -168,13 +196,11 @@ router.get('/GeneratePaper', async (req, res) => {
             mult / 3
           )
           questionIds = questionIds.concat(questions.map((item) => item._id))
-          answers =answers.concat(
-            questions.map((item) => item.correctOption),
-          )
+          answers = answers.concat(questions.map((item) => item.correctOption))
         }
       }
     } else {
-      subjects1[0]=subject
+      subjects1[0] = subject
       const Model = msubjectToModelMap[subject][exam]
       if (!Model) {
         throw new Error('Invalid subject or exam type.')
@@ -182,11 +208,10 @@ router.get('/GeneratePaper', async (req, res) => {
 
       const mQuestions = await getRandomQuestions(Model, difficulty, mult)
       questionIds = mQuestions.map((item) => item._id)
-          answers = mQuestions.map((item) => item.correctOption)
+      answers = mQuestions.map((item) => item.correctOption)
 
       if (exam === 'jee') {
-        const nModel =
-          nsubjectToModelMap[subject]
+        const nModel = nsubjectToModelMap[subject]
         if (!nModel) {
           throw new Error('Invalid subject or exam type.')
         }
@@ -199,11 +224,11 @@ router.get('/GeneratePaper', async (req, res) => {
       name: req.body.name,
       subject: subjects1,
       exam: req.body.exam,
-      num:req.body.num,
+      num: req.body.num,
       totalQuestions: req.body.totalQuestions,
       date: new Date().toLocaleString(),
       questionIds,
-      answers:answers
+      answers: answers,
     })
 
     await paper.save()

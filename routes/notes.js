@@ -5,7 +5,6 @@ const Pdf = require('../models/notes')
 
 const multer = require('multer')
 const fs = require('fs')
-let name
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -17,7 +16,7 @@ const storage = multer.diskStorage({
       file.originalname.lastIndexOf('.'),
       file.originalname.length
     )
-    name = file.fieldname + '-' + uniqueSuffix + ext
+    let name = file.fieldname + '-' + uniqueSuffix + ext
     cb(null, name)
   },
 })
@@ -30,7 +29,7 @@ router.post('/', upload.single('pdf'), async (req, res) => {
     const pdf = new Pdf({
       name: req.body.name,
       subject: req.body.subject,
-      url: name,
+      url: req.file.filename,
       date: new Date().toLocaleString(),
     })
     await pdf.save()
