@@ -143,99 +143,105 @@ router.post(
   }
 )
 
-router.get('/GeneratePaper', async (req, res) => {
-  try {
-    const { subject, exam, difficulty, totalQuestions, num } = req.body
+router.get(
+  '/GeneratePaper',
+  passport.authenticate('adminJwt', { session: false }),
+  async (req, res) => {
+    try {
+      const { subject, exam, difficulty, totalQuestions, num } = req.query
 
-    let mult = totalQuestions - num
-    let questionIds = []
-    let subjects1 = []
-    let answers = []
+      let mult = totalQuestions - num
+      let questionIds = []
+      let subjects1 = []
+      let answers = []
 
-    if (subject === 'all') {
-      if (exam === 'jee') {
-        const subjects = ['math', 'physics', 'chemistry']
-        subjects1 = subjects
-        for (let i = 0; i < 3; i++) {
-          const mmodel = msubjectToModelMap[subjects[i]][exam]
-          const nmodel = nsubjectToModelMap[subjects[i]]
-          if (!mmodel && !nmodel) {
-            throw new Error('Invalid subject or exam type.')
+      if (subject === 'all') {
+        if (exam === 'jee') {
+          const subjects = ['math', 'physics', 'chemistry']
+          subjects1 = subjects
+          for (let i = 0; i < 3; i++) {
+            const mmodel = msubjectToModelMap[subjects[i]][exam]
+            const nmodel = nsubjectToModelMap[subjects[i]]
+            if (!mmodel && !nmodel) {
+              throw new Error('Invalid subject or exam type.')
+            }
+
+            const mquestions = await getRandomQuestions(
+              mmodel,
+              difficulty,
+              mult / 3
+            )
+            const nquestions = await getRandomQuestions(
+              nmodel,
+              difficulty,
+              num / 3
+            )
+            questionIds = questionIds.concat(
+              mquestions.map((item) => item._id),
+              nquestions.map((item) => item._id)
+            )
+            answers = answers.concat(
+              mquestions.map((item) => item.correctOption),
+              nquestions.map((item) => item.correctOption)
+            )
           }
-
-          const mquestions = await getRandomQuestions(
-            mmodel,
-            difficulty,
-            mult / 3
-          )
-          const nquestions = await getRandomQuestions(
-            nmodel,
-            difficulty,
-            num / 3
-          )
-          questionIds = questionIds.concat(
-            mquestions.map((item) => item._id),
-            nquestions.map((item) => item._id)
-          )
-          answers = answers.concat(
-            mquestions.map((item) => item.correctOption),
-            nquestions.map((item) => item.correctOption)
-          )
+        } else {
+          const subjects = ['bio', 'physics', 'chemistry']
+          subjects1 = subjects
+          for (let i = 0; i < 3; i++) {
+            const model = msubjectToModelMap[subjects[i]][exam]
+            if (!model) {
+              throw new Error('Invalid subject or exam type.')
+            }
+            const questions = await getRandomQuestions(
+              model,
+              difficulty,
+              mult / 3
+            )
+            questionIds = questionIds.concat(questions.map((item) => item._id))
+            answers = answers.concat(
+              questions.map((item) => item.correctOption)
+            )
+          }
         }
       } else {
-        const subjects = ['bio', 'physics', 'chemistry']
-        subjects1 = subjects
-        for (let i = 0; i < 3; i++) {
-          const model = msubjectToModelMap[subjects[i]][exam]
-          if (!model) {
-            throw new Error('Invalid subject or exam type.')
-          }
-          const questions = await getRandomQuestions(
-            model,
-            difficulty,
-            mult / 3
-          )
-          questionIds = questionIds.concat(questions.map((item) => item._id))
-          answers = answers.concat(questions.map((item) => item.correctOption))
-        }
-      }
-    } else {
-      subjects1[0] = subject
-      const Model = msubjectToModelMap[subject][exam]
-      if (!Model) {
-        throw new Error('Invalid subject or exam type.')
-      }
-
-      const mQuestions = await getRandomQuestions(Model, difficulty, mult)
-      questionIds = mQuestions.map((item) => item._id)
-      answers = mQuestions.map((item) => item.correctOption)
-
-      if (exam === 'jee') {
-        const nModel = nsubjectToModelMap[subject]
-        if (!nModel) {
+        subjects1[0] = subject
+        const Model = msubjectToModelMap[subject][exam]
+        if (!Model) {
           throw new Error('Invalid subject or exam type.')
         }
-        const nQuestions = await getRandomQuestions(nModel, difficulty, num)
-        questionIds = questionIds.concat(nQuestions.map((item) => item._id))
-        answers = answers.concat(nQuestions.map((item) => item.correctOption))
-      }
-    }
-    const paper = new Test({
-      name: req.body.name,
-      subject: subjects1,
-      exam: req.body.exam,
-      num: req.body.num,
-      totalQuestions: req.body.totalQuestions,
-      date: new Date().toLocaleString(),
-      questionIds,
-      answers: answers,
-    })
 
-    await paper.save()
-    res.send(paper).end()
-  } catch (error) {
-    res.status(401).send(error.message).end()
+        const mQuestions = await getRandomQuestions(Model, difficulty, mult)
+        questionIds = mQuestions.map((item) => item._id)
+        answers = mQuestions.map((item) => item.correctOption)
+
+        if (exam === 'jee') {
+          const nModel = nsubjectToModelMap[subject]
+          if (!nModel) {
+            throw new Error('Invalid subject or exam type.')
+          }
+          const nQuestions = await getRandomQuestions(nModel, difficulty, num)
+          questionIds = questionIds.concat(nQuestions.map((item) => item._id))
+          answers = answers.concat(nQuestions.map((item) => item.correctOption))
+        }
+      }
+      const paper = new Test({
+        name: req.body.name,
+        subject: subjects1,
+        exam: req.body.exam,
+        num: req.body.num,
+        totalQuestions: req.body.totalQuestions,
+        date: new Date().toLocaleString(),
+        questionIds,
+        answers: answers,
+      })
+
+      await paper.save()
+      res.status(200).end()
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
   }
-})
+)
 
 module.exports = router
