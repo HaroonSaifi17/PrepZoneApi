@@ -105,7 +105,8 @@ router.post(
         img: name,
       })
       await question.save()
-      res.status(200).end()
+      const questionIdString = question._id.toString();
+      res.send({id:questionIdString}).status(200).end()
     } catch (error) {
       res.status(401).send(error.message).end()
     }
@@ -136,7 +137,8 @@ router.post(
         img: name,
       })
       await question.save()
-      res.status(200).end()
+const questionIdString = question._id.toString();
+      res.send({id:questionIdString}).status(200).end()
     } catch (error) {
       res.status(401).send(error.message).end()
     }
@@ -148,7 +150,7 @@ router.get(
   passport.authenticate('adminJwt', { session: false }),
   async (req, res) => {
     try {
-      const { subject, exam, difficulty, totalQuestions, num } = req.query
+      const { subject, exam, difficulty, totalQuestions, num , name } = req.query
 
       let mult = totalQuestions - num
       let questionIds = []
@@ -226,16 +228,40 @@ router.get(
         }
       }
       const paper = new Test({
-        name: req.body.name,
+        name: name,
         subject: subjects1,
-        exam: req.body.exam,
-        num: req.body.num,
-        totalQuestions: req.body.totalQuestions,
+        exam: exam,
+        num: num,
+        totalQuestions:totalQuestions,
         date: new Date().toLocaleString(),
         questionIds,
         answers: answers,
       })
 
+      await paper.save()
+      res.status(200).end()
+    } catch (error) {
+      res.status(401).send(error.message).end()
+    }
+  }
+)
+
+router.post(
+  '/CreatePaper',
+  passport.authenticate('adminJwt', { session: false }),
+  async (req, res) => {
+    try {
+      const { subject, exam, totalQuestions, num , name,questionIds,answers } = req.body
+      const paper = new Test({
+        name: name,
+        subject: JSON.parse(subject),
+        exam: exam,
+        num: num,
+        totalQuestions:totalQuestions,
+        date: new Date().toLocaleString(),
+        questionIds:JSON.parse(questionIds),
+        answers: JSON.parse(answers),
+      })
       await paper.save()
       res.status(200).end()
     } catch (error) {
