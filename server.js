@@ -1,4 +1,5 @@
 const express = require('express')
+const fetch = require('node-fetch')
 const cors = require('cors')
 require('dotenv').config()
 
@@ -20,6 +21,31 @@ app.use('/student', studentRouter)
 app.use('/admin', adminRouter)
 app.use('/notes', notesRouter)
 
+app.get('/ping',(req,res)=>{
+  try {
+    res.status(200).end() 
+  } catch (error) {
+      res.status(401).send(error.message).end()
+  }
+})
+
+async function pingAPI() {
+  try {
+    const response = await fetch('https://server.haroonsaifi.site/ping');
+    if (response.ok) {
+      console.log('Ping successful');
+    } else {
+      console.log('Ping failed');
+    }
+  } catch (error) {
+    console.error('Error occurred while pinging API:', error);
+  }
+}
+const interval = 10 * 60 * 1000;
+setInterval(pingAPI, interval);
+
+
 app.listen(process.env.PORT || port, () => {
   console.log(`Server is listening at http://localhost:${port} `)
 })
+
