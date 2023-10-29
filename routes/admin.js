@@ -14,12 +14,20 @@ const Test = require('../models/test')
 const router = require('express').Router()
 
 async function getRandomQuestions(Model, difficulty, num) {
-  return await Model.aggregate([
-    { $match: { difficulty: { $eq: difficulty } } },
-    { $sample: { size: num } },
-  ]).exec()
+  let questions = []
+  if (num != 0) {
+    questions = await Model.aggregate([
+      { $match: { difficulty: { $eq: difficulty } } },
+      { $sample: { size: num } },
+    ]).exec()
+  }
+  if (questions.length < num) {
+    return {
+      error: `Not enough questions available in the database for difficulty level '${difficulty}' and requested quantity '${num}'.`,
+    }
+  }
+  return questions
 }
-
 const msubjectToModelMap = {
   math: { jee: JMathQuestion },
   bio: { neet: NBiologyQuestion },
@@ -105,8 +113,8 @@ router.post(
         img: name,
       })
       await question.save()
-      const questionIdString = question._id.toString();
-      res.send({id:questionIdString}).status(200).end()
+      const questionIdString = question._id.toString()
+      res.send({ id: questionIdString }).status(200).end()
     } catch (error) {
       res.status(401).send(error.message).end()
     }
@@ -137,8 +145,8 @@ router.post(
         img: name,
       })
       await question.save()
-const questionIdString = question._id.toString();
-      res.send({id:questionIdString}).status(200).end()
+      const questionIdString = question._id.toString()
+      res.send({ id: questionIdString }).status(200).end()
     } catch (error) {
       res.status(401).send(error.message).end()
     }
@@ -150,7 +158,7 @@ router.get(
   passport.authenticate('adminJwt', { session: false }),
   async (req, res) => {
     try {
-      const { subject, exam, difficulty, totalQuestions, num , name } = req.query
+      const { subject, exam, difficulty, totalQuestions, num, name } = req.query
 
       let mult = totalQuestions - num
       let questionIds = []
@@ -173,11 +181,17 @@ router.get(
               difficulty,
               mult / 3
             )
+            if (mquestions.error) {
+              throw new Error(mquestions.error)
+            }
             const nquestions = await getRandomQuestions(
               nmodel,
               difficulty,
               num / 3
             )
+            if (nquestions.error) {
+              throw new Error(nquestions.error)
+            }
             questionIds = questionIds.concat(
               mquestions.map((item) => item._id),
               nquestions.map((item) => item._id)
@@ -200,6 +214,9 @@ router.get(
               difficulty,
               mult / 3
             )
+            if (questions.error) {
+              throw new Error(questions.error)
+            }
             questionIds = questionIds.concat(questions.map((item) => item._id))
             answers = answers.concat(
               questions.map((item) => item.correctOption)
@@ -214,6 +231,9 @@ router.get(
         }
 
         const mQuestions = await getRandomQuestions(Model, difficulty, mult)
+        if (mQuestions.error) {
+          throw new Error(mQuestions.error)
+        }
         questionIds = mQuestions.map((item) => item._id)
         answers = mQuestions.map((item) => item.correctOption)
 
@@ -223,6 +243,9 @@ router.get(
             throw new Error('Invalid subject or exam type.')
           }
           const nQuestions = await getRandomQuestions(nModel, difficulty, num)
+          if (nQuestions.error) {
+            throw new Error(nQuestions.error)
+          }
           questionIds = questionIds.concat(nQuestions.map((item) => item._id))
           answers = answers.concat(nQuestions.map((item) => item.correctOption))
         }
@@ -232,7 +255,7 @@ router.get(
         subject: subjects1,
         exam: exam,
         num: num,
-        totalQuestions:totalQuestions,
+        totalQuestions: totalQuestions,
         date: new Date().toLocaleString(),
         questionIds,
         answers: answers,
@@ -241,7 +264,11 @@ router.get(
       await paper.save()
       res.status(200).end()
     } catch (error) {
-      res.status(401).send(error.message).end()
+      if (error.statusCode) {
+        res.status(error.statusCode).send(error.message).end()
+      } else {
+        res.status(400).send(error.message).end()
+      }
     }
   }
 )
@@ -251,15 +278,16 @@ router.post(
   passport.authenticate('adminJwt', { session: false }),
   async (req, res) => {
     try {
-      const { subject, exam, totalQuestions, num , name,questionIds,answers } = req.body
+      const { subject, exam, totalQuestions, num, name, questionIds, answers } =
+        req.body
       const paper = new Test({
         name: name,
         subject: JSON.parse(subject),
         exam: exam,
         num: num,
-        totalQuestions:totalQuestions,
+        totalQuestions: totalQuestions,
         date: new Date().toLocaleString(),
-        questionIds:JSON.parse(questionIds),
+        questionIds: JSON.parse(questionIds),
         answers: JSON.parse(answers),
       })
       await paper.save()
