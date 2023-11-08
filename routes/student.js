@@ -41,7 +41,7 @@ router.get('/getImg/:url', async (req, res) => {
 
 router.get('/profileImg', authenticateJWT, async (req, res) => {
   try {
-    const data = await getStudentDataById(req.user.userId, 'profileImg')
+    const data = await getStudentDataById(req.user.userId, 'profileImg name')
     res.send(data).end()
   } catch (error) {
     res.status(404).json({ error: error.message })
