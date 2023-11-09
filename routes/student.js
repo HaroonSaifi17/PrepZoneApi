@@ -436,7 +436,7 @@ router.get('/getResultList', authenticateJWT, async (req, res) => {
           result.name.match(new RegExp(search, 'i')) &&
           result.subject.some((subject) => genre.includes(subject))
       )
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => {return (new Date(b.date) - new Date(a.date))*sort})
       .slice(page * limit, (page + 1) * limit)
       .map(({ _id, name, date, marks }) => ({ _id, name, date, marks }))
 
@@ -455,7 +455,10 @@ router.get('/getResultList', authenticateJWT, async (req, res) => {
       results,
       pageno,
     }
+    setTimeout(()=>{
+
     res.status(200).json(response)
+    },10000)
   } catch (error) {
     res.status(401).send(error.message).end()
   }
