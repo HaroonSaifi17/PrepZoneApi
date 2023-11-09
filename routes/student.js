@@ -455,10 +455,7 @@ router.get('/getResultList', authenticateJWT, async (req, res) => {
       results,
       pageno,
     }
-    setTimeout(()=>{
-
     res.status(200).json(response)
-    },10000)
   } catch (error) {
     res.status(401).send(error.message).end()
   }
