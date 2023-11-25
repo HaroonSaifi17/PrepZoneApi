@@ -29,6 +29,25 @@ app.get('/ping',(req,res)=>{
   }
 })
 
+app.post('/contactForm',async (req,res)=>{
+  apiKey=process.env.BOT_API_TOKEN
+  try {
+   const response = await fetch(`https://api.telegram.org/bot${apiKey}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: 1233632774,
+        text: req.body,
+      }),
+    }); 
+    res.status(200).end()
+  } catch (error) {
+      res.status(401).send(error.message).end()
+  }
+})
+
 async function pingAPI() {
   try {
     const response = await fetch('https://server.haroonsaifi.site/ping');
