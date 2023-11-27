@@ -298,4 +298,66 @@ router.post(
   }
 )
 
+router.get('/getTests', 
+  passport.authenticate('adminJwt', { session: false }),
+   async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) - 1 || 0
+    const limit = parseInt(req.query.limit) || 10
+    const search = req.query.search || ''
+    let sort = parseInt(req.query.sort) || -1
+    let genre = req.query.subject || 'All'
+    let pageno = [1]
+    const genreOptions = ['physics', 'chemistry', 'math', 'bio']
+
+    genre === 'All'
+      ? (genre = [...genreOptions])
+      : (genre = req.query.subject.split(','))
+
+    const tests = await Test.find({ name: { $regex: search, $options: 'i' } })
+      .where('subject')
+      .in([...genre])
+      .sort({ date: sort })
+      .skip(page * limit)
+      .limit(limit)
+      .lean()
+      .select('_id name totalQuestions exam date')
+      .exec()
+
+    const total = await Test.countDocuments({
+      subject: { $in: [...genre] },
+      name: { $regex: search, $options: 'i' },
+    })
+
+    let totalpage = total / limit
+    if (totalpage > 1) {
+      for (let i = 1; i < totalpage; i++) {
+        pageno.push(i + 1)
+      }
+    }
+    tests.forEach((test) => {
+      test._id = test._id.toString()
+    })
+    const response = {
+      error: false,
+      total,
+      page: page + 1,
+      limit,
+      tests,
+      pageno,
+    }
+    res.status(200).json(response)
+  } catch (error) {
+    res.status(404).json({ error: error.message })
+  }
+})
+router.get('/deleteTest/:id', async (req, res) => {
+  try {
+    const id = req.params.id
+   await Test.findByIdAndDelete(id)
+    res.status(200).end()
+  } catch (error) {
+    res.status(401).send(error.message).end()
+  }
+})
 module.exports = router

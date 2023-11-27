@@ -1,0 +1,14 @@
+{
+  "env": {
+    "node": true,
+  },
+  "extends": [ "plugin:prettier/recommended"],
+  "plugins": [ "prettier"],
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "rules": {
+    "no-console": "error",
+    "func-names": "off",
+  }
+}
