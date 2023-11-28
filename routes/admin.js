@@ -11,6 +11,7 @@ const {
 } = require("../models/question");
 
 const Test = require("../models/test");
+const Student = require("../models/student");
 const Pdf = require("../models/notes");
 const path = require("path");
 const router = require("express").Router();
@@ -453,4 +454,39 @@ router.get(
     }
   }
 );
+
+router.get(
+  "/dashboard",
+  passport.authenticate("adminJwt", { session: false }),
+  async (req, res) => {
+    try {
+     const totalStudent = await Student.countDocuments()
+     const jeePhysics = await JPhysicsQuestion.countDocuments()
+     const jeeChemistry = await JChemistryQuestion.countDocuments()
+     const jeeMath = await JMathQuestion.countDocuments()
+     const numPhysics = await PhysicsNumQuestion.countDocuments()
+     const numChemistry = await ChemistryNumQuestion.countDocuments()
+     const numMath = await MathNumQuestion.countDocuments()
+     const neetPhysics = await NPhysicsQuestion.countDocuments()
+     const neetChemistry = await NChemistryQuestion.countDocuments()
+     const neetBio = await NBiologyQuestion.countDocuments()
+      const response ={
+        totalStudent,
+        jeePhysics,
+        jeeChemistry,
+        jeeMath,
+        numPhysics,
+        numChemistry,
+        numMath,
+        neetPhysics,
+        neetChemistry,
+        neetBio
+      }
+      res.status(200).json(response);
+    } catch (error) {
+      res.status(401).send(error.message).end();
+    }
+  }
+);
+
 module.exports = router;
