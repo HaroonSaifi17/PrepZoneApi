@@ -24,7 +24,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage ,limits: {
     fileSize: 10 * 1024 * 1024, 
   }})
-router.post('/', upload.single('pdf'), async (req, res) => {
+router.post('/', 
+  passport.authenticate('adminJwt', { session: false }),
+  upload.single('pdf'), async (req, res) => {
   try {
     const pdf = new Pdf({
       name: req.body.name,
@@ -40,7 +42,6 @@ router.post('/', upload.single('pdf'), async (req, res) => {
 })
 router.get(
   '/pdf/:url',
-  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     try {
       const fileUrl = req.params.url;
