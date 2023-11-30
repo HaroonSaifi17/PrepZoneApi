@@ -489,4 +489,59 @@ router.get(
   }
 );
 
+router.get(
+  "/studentList",
+  passport.authenticate("adminJwt", { session: false }),
+  async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) - 1 || 0;
+      const limit = parseInt(req.query.limit) || 10;
+      const search = req.query.search || "";
+      let sort = parseInt(req.query.sort) || -1;
+      let exam = req.query.exam || "Jee";
+      let pageno = [1];
+      let rankType = 'topMarks';
+      if (sort == 1) {
+        rankType = "averageMarks";
+      }
+      let i = exam === 'Neet' ? 1 : 0;
+
+      const sortCriteria = {};
+      sortCriteria[rankType + '.' + i] = -1
+
+      const students = await Student.find({ 
+        name: { $regex: search, $options: "i" }, 
+      })
+      .sort(sortCriteria)
+      .skip(page * limit)
+      .limit(limit)
+      .select("name prep topMarks averageMarks email profileImg phoneNumber")
+
+      const total = await Student.countDocuments({
+        name: { $regex: search, $options: "i" },
+      });
+
+      let totalpage = Math.ceil(total / limit);
+      if (totalpage > 1) {
+        for (let i = 1; i < totalpage; i++) {
+          pageno.push(i + 1);
+        }
+      }
+
+      const response = {
+        error: false,
+        total,
+        page: page + 1,
+        limit,
+        students,
+        pageno,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      res.status(401).send(error.message).end();
+    }
+  }
+);
+
 module.exports = router;
