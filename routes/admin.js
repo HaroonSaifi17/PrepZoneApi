@@ -97,9 +97,9 @@ router.post(
         exam,
         difficulty,
         questionText,
-        options,
         correctOption,
       } = req.body;
+      options = req.body.options.split(',')
       const Model = msubjectToModelMap[subject][exam];
       if (!Model) {
         throw new Error("Invalid subject or exam type.");
