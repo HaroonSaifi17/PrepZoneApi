@@ -86,9 +86,8 @@ router.post(
         difficulty,
         questionText,
         correctOption,
-        option
+        options
       } = req.body;
-      const options= JSON.parse(option)
       const Model = msubjectToModelMap[subject][exam];
       if (!Model) {
         throw new Error("Invalid subject or exam type.");
@@ -100,7 +99,7 @@ router.post(
       const question = new Model({
         difficulty,
         questionText,
-        options,
+        options: JSON.parse(options),
         correctOption,
         img: name,
       });
