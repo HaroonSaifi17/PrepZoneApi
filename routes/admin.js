@@ -74,18 +74,6 @@ const upload1 = multer({
   },
 });
 
-router.get(
-  "/check",
-  passport.authenticate("adminJwt", { session: false }),
-  async (req, res) => {
-    try {
-      res.send({ check: true }).status(200).end();
-    } catch (error) {
-      res.status(401).send(error.message).end();
-    }
-  }
-);
-
 router.post(
   "/addMQuestion",
   passport.authenticate("adminJwt", { session: false }),
@@ -98,8 +86,9 @@ router.post(
         difficulty,
         questionText,
         correctOption,
+        option
       } = req.body;
-      options = req.body.options.split(',')
+      const options= JSON.parse(option)
       const Model = msubjectToModelMap[subject][exam];
       if (!Model) {
         throw new Error("Invalid subject or exam type.");
