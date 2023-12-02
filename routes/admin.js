@@ -86,7 +86,7 @@ router.post(
         difficulty,
         questionText,
         correctOption,
-        options
+        options,
       } = req.body;
       const Model = msubjectToModelMap[subject][exam];
       if (!Model) {
@@ -371,9 +371,9 @@ router.get(
       fs.unlink(filePath, function (err) {
         if (err) return console.log(err);
         res.status(200).end();
-        return
+        return;
       });
-        res.status(200).end();
+      res.status(200).end();
     } catch (error) {
       res.status(401).send(error.message).end();
     }
@@ -448,17 +448,17 @@ router.get(
   passport.authenticate("adminJwt", { session: false }),
   async (req, res) => {
     try {
-     const totalStudent = await Student.countDocuments()
-     const jeePhysics = await JPhysicsQuestion.countDocuments()
-     const jeeChemistry = await JChemistryQuestion.countDocuments()
-     const jeeMath = await JMathQuestion.countDocuments()
-     const numPhysics = await PhysicsNumQuestion.countDocuments()
-     const numChemistry = await ChemistryNumQuestion.countDocuments()
-     const numMath = await MathNumQuestion.countDocuments()
-     const neetPhysics = await NPhysicsQuestion.countDocuments()
-     const neetChemistry = await NChemistryQuestion.countDocuments()
-     const neetBio = await NBiologyQuestion.countDocuments()
-      const response ={
+      const totalStudent = await Student.countDocuments();
+      const jeePhysics = await JPhysicsQuestion.countDocuments();
+      const jeeChemistry = await JChemistryQuestion.countDocuments();
+      const jeeMath = await JMathQuestion.countDocuments();
+      const numPhysics = await PhysicsNumQuestion.countDocuments();
+      const numChemistry = await ChemistryNumQuestion.countDocuments();
+      const numMath = await MathNumQuestion.countDocuments();
+      const neetPhysics = await NPhysicsQuestion.countDocuments();
+      const neetChemistry = await NChemistryQuestion.countDocuments();
+      const neetBio = await NBiologyQuestion.countDocuments();
+      const response = {
         totalStudent,
         jeePhysics,
         jeeChemistry,
@@ -468,8 +468,8 @@ router.get(
         numMath,
         neetPhysics,
         neetChemistry,
-        neetBio
-      }
+        neetBio,
+      };
       res.status(200).json(response);
     } catch (error) {
       res.status(401).send(error.message).end();
@@ -488,22 +488,22 @@ router.get(
       let sort = parseInt(req.query.sort) || -1;
       let exam = req.query.exam || "Jee";
       let pageno = [1];
-      let rankType = 'topMarks';
+      let rankType = "topMarks";
       if (sort == 1) {
         rankType = "averageMarks";
       }
-      let i = exam === 'Neet' ? 1 : 0;
+      let i = exam === "Neet" ? 1 : 0;
 
       const sortCriteria = {};
-      sortCriteria[rankType + '.' + i] = -1
+      sortCriteria[rankType + "." + i] = -1;
 
-      const students = await Student.find({ 
-        name: { $regex: search, $options: "i" }, 
+      const students = await Student.find({
+        name: { $regex: search, $options: "i" },
       })
-      .sort(sortCriteria)
-      .skip(page * limit)
-      .limit(limit)
-      .select("name prep topMarks averageMarks email profileImg phoneNumber")
+        .sort(sortCriteria)
+        .skip(page * limit)
+        .limit(limit)
+        .select("name prep topMarks averageMarks email profileImg phoneNumber");
 
       const total = await Student.countDocuments({
         name: { $regex: search, $options: "i" },
@@ -528,6 +528,157 @@ router.get(
       res.status(200).json(response);
     } catch (error) {
       res.status(401).send(error.message).end();
+    }
+  }
+);
+router.get(
+  "/getResult",
+  passport.authenticate("adminJwt", { session: false }),
+  async (req, res) => {
+    try {
+      const studentId = req.query.studentId;
+      const resultId = req.query.resultId;
+      const student = await Student.findById(studentId)
+        .select("results")
+        .lean()
+        .exec();
+      const results = student.results.filter((result) =>
+        result._id.equals(resultId)
+      );
+      const test = await Test.findById(results[0].testId)
+        .select("exam totalQuestions questionIds answers num")
+        .lean()
+        .exec();
+      data = { test: test, results: results[0] };
+      res.send(data).status(200).end();
+    } catch (error) {
+      res.status(401).send(error.message).end();
+    }
+  }
+);
+router.get(
+  "/attemptList",
+  passport.authenticate("adminJwt", { session: false }),
+  async (req, res) => {
+    try {
+      const testId = req.query.testId;
+      const page = parseInt(req.query.page) - 1 || 0;
+      const limit = parseInt(req.query.limit) || 10;
+      const search = req.query.search || "";
+      let sort = parseInt(req.query.sort) || -1;
+      let pageno = [1];
+      let students = await Student.find({
+        name: { $regex: search, $options: "i" },
+        results: {
+          $elemMatch: { testId: testId },
+        },
+      })
+        .skip(page * limit)
+        .limit(limit)
+        .select("_id name profileImg results");
+      let filteredStudents = [];
+      students.forEach((student) => {
+        let filteredResults = student.results.filter(
+          (result) => result.testId === testId
+        );
+        if (filteredResults.length > 1) {
+          filteredResults.forEach((result, index) => {
+            if (index === 0) {
+              let filteredStudent = {
+                _id: student._id.toString(),
+                name: student.name,
+                profileImg: student.profileImg,
+                results: [result],
+              };
+              filteredStudents.push(filteredStudent);
+            } else {
+              let clonedStudent = JSON.parse(JSON.stringify(student));
+              clonedStudent.results = [result];
+              filteredStudents.push(clonedStudent);
+            }
+          });
+        } else if (filteredResults.length === 1) {
+          filteredStudents.push({
+            _id: student._id.toString(),
+            name: student.name,
+            profileImg: student.profileImg,
+            results: filteredResults,
+          });
+        }
+      });
+      filteredStudents.sort((a, b) => {
+        const studentAMarks = a.results[0].marks;
+        const studentBMarks = b.results[0].marks;
+        if (sort === 1) {
+          return studentAMarks - studentBMarks;
+        } else {
+          return studentBMarks - studentAMarks;
+        }
+      });
+      const total = await Student.countDocuments({
+        name: { $regex: search, $options: "i" },
+        results: {
+          $elemMatch: { testId: testId },
+        },
+      });
+
+      let totalpage = Math.ceil(total / limit);
+      if (totalpage > 1) {
+        for (let i = 1; i < totalpage; i++) {
+          pageno.push(i + 1);
+        }
+      }
+      console.log(filteredStudents);
+
+      const response = {
+        error: false,
+        total,
+        page: page + 1,
+        limit,
+        students: filteredStudents,
+        pageno,
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      res.status(401).send(error.message).end();
+    }
+  }
+);
+router.get(
+  "/getQuestion",
+  passport.authenticate("adminJwt", { session: false }),
+  async (req, res) => {
+    try {
+      const { subject, exam, id } = req.query;
+      const Model = msubjectToModelMap[subject][exam];
+      if (!Model) {
+        throw new Error("Invalid subject or exam type.");
+      }
+      const question = await Model.findById(id)
+        .select("questionText options img")
+        .exec();
+      res.send(question).end();
+    } catch (error) {
+      res.status(404).json({ error: error.message });
+    }
+  }
+);
+router.get(
+  "/getnQuestion",
+  passport.authenticate("adminJwt", { session: false }),
+  async (req, res) => {
+    try {
+      const { subject, id } = req.query;
+      const Model = nsubjectToModelMap[subject];
+      if (!Model) {
+        throw new Error("Invalid subject or exam type.");
+      }
+      const question = await Model.findById(id)
+        .select("questionText img")
+        .exec();
+      res.send(question).end();
+    } catch (error) {
+      res.status(404).json({ error: error.message });
     }
   }
 );
