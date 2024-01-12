@@ -78,11 +78,11 @@ router.post('/newStudentPost', authenticateJWT, async (req, res) => {
 
 router.get('/checkNew', authenticateJWT, async (req, res) => {
   try {
-    const data = await getStudentDataById(req.user.userId, 'phoneNumber')
+    const data = await getStudentDataById(req.user.userId, 'phoneNumber name')
     if (typeof data.phoneNumber === 'undefined') {
       res.send({ isNew: false, name: data.name }).end()
     } else {
-      res.send({ isNew: true }).end()
+      res.send({ isNew: true, name: data.name }).end()
     }
   } catch (error) {
     res.status(404).json({ error: error.message })
