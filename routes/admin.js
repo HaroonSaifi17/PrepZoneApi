@@ -93,7 +93,7 @@ router.post(
         throw new Error("Invalid subject or exam type.");
       }
       let name = "";
-      if (req.file != undefined) {
+      if (typeof req.file !== 'undefined') {
         name = req.file.filename;
       }
       const question = new Model({
@@ -125,7 +125,7 @@ router.post(
         throw new Error("Invalid subject");
       }
       let name = "";
-      if (req.file != undefined) {
+      if (typeof req.file != 'undefined') {
         name = req.file.filename;
       }
 
