@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 mongoose
-  .connect(process.env.BLOGDB_CONNECTION_URL, {
+  .connect(process.env.DB_CONNECTION_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

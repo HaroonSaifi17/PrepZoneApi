@@ -1,6 +1,6 @@
 {
   "env": {
-    "node": true,
+    "node": true
   },
   "extends": [ "plugin:prettier/recommended"],
   "plugins": [ "prettier"],
@@ -9,6 +9,6 @@
   },
   "rules": {
     "no-console": "error",
-    "func-names": "off",
+    "func-names": "off"
   }
 }
