@@ -151,13 +151,14 @@ router.get(
     try {
       const { exam, difficulty, totalQuestions, num, name } = req.query;
       const subject = JSON.parse(req.query.subject);
+      console.log(subject);
 
       let mult = totalQuestions - num;
       let questionIds = [];
       let subjects1 = [];
       let answers = [];
 
-      if (subject === "all") {
+      if (subject.length >= 1) {
         if (exam === "jee") {
           const subjects = ["math", "physics", "chemistry"];
           subjects1 = subjects;
@@ -370,8 +371,7 @@ router.get(
       const filePath = path.join(__dirname, "../files/pdf/", id);
       fs.unlink(filePath, function (err) {
         if (err) return console.log(err);
-        res.status(200).end();
-        return;
+        res.status(200).end(); return;
       });
       res.status(200).end();
     } catch (error) {
