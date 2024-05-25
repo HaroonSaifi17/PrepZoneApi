@@ -60,7 +60,7 @@ const storage1 = multer.diskStorage({
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     let ext = file.originalname.substring(
       file.originalname.lastIndexOf("."),
-      file.originalname.length
+      file.originalname.length,
     );
     let imgName = file.fieldname + "-" + uniqueSuffix + ext;
     cb(null, imgName);
@@ -93,7 +93,7 @@ router.post(
         throw new Error("Invalid subject or exam type.");
       }
       let name = "";
-      if (typeof req.file !== 'undefined') {
+      if (typeof req.file !== "undefined") {
         name = req.file.filename;
       }
       const question = new Model({
@@ -109,7 +109,7 @@ router.post(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 
 router.post(
@@ -125,7 +125,7 @@ router.post(
         throw new Error("Invalid subject");
       }
       let name = "";
-      if (typeof req.file != 'undefined') {
+      if (typeof req.file != "undefined") {
         name = req.file.filename;
       }
 
@@ -141,7 +141,7 @@ router.post(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 
 router.get(
@@ -149,8 +149,8 @@ router.get(
   passport.authenticate("adminJwt", { session: false }),
   async (req, res) => {
     try {
-      const { subject, exam, difficulty, totalQuestions, num, name } =
-        req.query;
+      const { exam, difficulty, totalQuestions, num, name } = req.query;
+      const subject = JSON.parse(req.query.subject);
 
       let mult = totalQuestions - num;
       let questionIds = [];
@@ -171,7 +171,7 @@ router.get(
             const mquestions = await getRandomQuestions(
               mmodel,
               difficulty,
-              mult / 3
+              mult / 3,
             );
             if (mquestions.error) {
               throw new Error(mquestions.error);
@@ -179,18 +179,18 @@ router.get(
             const nquestions = await getRandomQuestions(
               nmodel,
               difficulty,
-              num / 3
+              num / 3,
             );
             if (nquestions.error) {
               throw new Error(nquestions.error);
             }
             questionIds = questionIds.concat(
               mquestions.map((item) => item._id),
-              nquestions.map((item) => item._id)
+              nquestions.map((item) => item._id),
             );
             answers = answers.concat(
               mquestions.map((item) => item.correctOption),
-              nquestions.map((item) => item.correctOption)
+              nquestions.map((item) => item.correctOption),
             );
           }
         } else {
@@ -204,14 +204,14 @@ router.get(
             const questions = await getRandomQuestions(
               model,
               difficulty,
-              mult / 3
+              mult / 3,
             );
             if (questions.error) {
               throw new Error(questions.error);
             }
             questionIds = questionIds.concat(questions.map((item) => item._id));
             answers = answers.concat(
-              questions.map((item) => item.correctOption)
+              questions.map((item) => item.correctOption),
             );
           }
         }
@@ -240,7 +240,7 @@ router.get(
           }
           questionIds = questionIds.concat(nQuestions.map((item) => item._id));
           answers = answers.concat(
-            nQuestions.map((item) => item.correctOption)
+            nQuestions.map((item) => item.correctOption),
           );
         }
       }
@@ -264,7 +264,7 @@ router.get(
         res.status(400).send(error.message).end();
       }
     }
-  }
+  },
 );
 
 router.post(
@@ -289,7 +289,7 @@ router.post(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 
 router.get(
@@ -345,7 +345,7 @@ router.get(
     } catch (error) {
       res.status(404).json({ error: error.message });
     }
-  }
+  },
 );
 router.get(
   "/deleteTest/:id",
@@ -358,7 +358,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 router.get(
   "/deletePdf/:id",
@@ -377,7 +377,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 router.get(
   "/pdf/:url",
@@ -390,7 +390,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 router.get(
   "/pdfs",
@@ -440,7 +440,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 
 router.get(
@@ -474,7 +474,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 
 router.get(
@@ -529,7 +529,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 router.get(
   "/getResult",
@@ -543,7 +543,7 @@ router.get(
         .lean()
         .exec();
       const results = student.results.filter((result) =>
-        result._id.equals(resultId)
+        result._id.equals(resultId),
       );
       const test = await Test.findById(results[0].testId)
         .select("exam totalQuestions questionIds answers num")
@@ -554,7 +554,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 router.get(
   "/attemptList",
@@ -579,7 +579,7 @@ router.get(
       let filteredStudents = [];
       students.forEach((student) => {
         let filteredResults = student.results.filter(
-          (result) => result.testId === testId
+          (result) => result.testId === testId,
         );
         if (filteredResults.length > 1) {
           filteredResults.forEach((result, index) => {
@@ -642,7 +642,7 @@ router.get(
     } catch (error) {
       res.status(401).send(error.message).end();
     }
-  }
+  },
 );
 router.get(
   "/getQuestion",
@@ -661,7 +661,7 @@ router.get(
     } catch (error) {
       res.status(404).json({ error: error.message });
     }
-  }
+  },
 );
 router.get(
   "/getnQuestion",
@@ -680,7 +680,7 @@ router.get(
     } catch (error) {
       res.status(404).json({ error: error.message });
     }
-  }
+  },
 );
 
 module.exports = router;
