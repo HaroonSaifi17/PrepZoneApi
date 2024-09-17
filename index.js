@@ -57,6 +57,21 @@ app.post(
   }),
 );
 
+async function pingAPI() {
+  try {
+    const response = await fetch('https://server.prepzone.tech/ping');
+    if (response.ok) {
+      console.log('Ping successful');
+    } else {
+      console.log('Ping failed');
+    }
+  } catch (error) {
+    console.error('Error occurred while pinging API:', error);
+  }
+}
+const interval = 10 * 60 * 1000;
+setInterval(pingAPI, interval);
+
 app.use(errorMiddleware);
 
 app.listen(process.env.PORT || port, () => {
