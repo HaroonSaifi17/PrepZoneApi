@@ -1,5 +1,4 @@
 const multer = require('multer')
-const fs = require('fs')
 let name
 
 const storage = multer.diskStorage({

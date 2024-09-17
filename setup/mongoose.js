@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 mongoose
   .connect(process.env.DB_CONNECTION_URL, {
@@ -6,8 +6,8 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    console.log('Connected to MongoDB Atlas')
+    console.log("Connected to MongoDB Atlas");
   })
   .catch((error) => {
-    console.error('Error connecting to MongoDB Atlas:', error)
-  })
+    console.error("Error connecting to MongoDB Atlas:", error);
+  });
