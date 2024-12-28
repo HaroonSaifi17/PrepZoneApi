@@ -1,4 +1,8 @@
-const {
+import { Router } from "express";
+import asyncWrapper from "../utils/asyncWrapper";
+import path from "path";
+import fs from "fs";
+import {
   JPhysicsQuestion,
   JChemistryQuestion,
   JMathQuestion,
@@ -8,62 +12,64 @@ const {
   MathNumQuestion,
   ChemistryNumQuestion,
   PhysicsNumQuestion,
-} = require("../models/question");
-const asyncHandler = require("../setup/asyncHandler");
+  INumericalQuestion,
+} from "../models/question";
+import Test from "../models/test";
+import Student, { IResult } from "../models/student";
+import Pdf from "../models/notes";
+import multer from "multer";
+import passport from "passport";
+import { Model, SortOrder } from "mongoose";
+import { IQuestion } from "../models/question";
 
-const Test = require("../models/test");
-const Student = require("../models/student");
-const Pdf = require("../models/notes");
-const path = require("path");
-const router = require("express").Router();
-const fs = require("fs");
+const router = Router();
 
-async function getRandomQuestions(Model, difficulty, num) {
-  let questions = [];
-  if (num != 0) {
+async function getRandomQuestions<T>(
+  Model: Model<T> | Model<INumericalQuestion>,
+  difficulty: string,
+  num: number,
+) {
+  let questions: T[] = [];
+  if (num !== 0) {
     questions = await Model.aggregate([
       { $match: { difficulty: { $eq: difficulty } } },
       { $sample: { size: num } },
     ]).exec();
   }
   if (questions.length < num) {
-    return {
-      error: `Not enough questions available in the database for difficulty level '${difficulty}' and requested quantity '${num}'.`,
-    };
+    throw new Error(
+      `Not enough questions available in the database for difficulty level '${difficulty}' and requested quantity '${num}'.`,
+    );
   }
   return questions;
 }
-const msubjectToModelMap = {
-  math: { jee: JMathQuestion },
-  bio: { neet: NBiologyQuestion },
-  physics: {
-    jee: JPhysicsQuestion,
-    neet: NPhysicsQuestion,
-  },
-  chemistry: {
-    jee: JChemistryQuestion,
-    neet: NChemistryQuestion,
-  },
-};
-const nsubjectToModelMap = {
+type nSubjectModel = Model<INumericalQuestion>;
+
+const nsubjectToModelMap: Record<string, nSubjectModel> = {
   math: MathNumQuestion,
   physics: PhysicsNumQuestion,
   chemistry: ChemistryNumQuestion,
+} as const;
+type mSubjectModel = Model<IQuestion>;
+
+const msubjectToModelMap: Record<string, Record<string, mSubjectModel>> = {
+  math: { jee: JMathQuestion },
+  bio: { neet: NBiologyQuestion },
+  physics: { jee: JPhysicsQuestion, neet: NPhysicsQuestion },
+  chemistry: { jee: JChemistryQuestion, neet: NChemistryQuestion },
 };
-const multer = require("multer");
-const passport = require("passport");
 
 const storage1 = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./files/questionImages");
+  destination: function (_req, _file, cb) {
+    cb(null, "./src/files/questionImages");
   },
-  filename: function (req, file, cb) {
+  filename: function (_req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    let ext = file.originalname.substring(
+    const ext = file.originalname.substring(
       file.originalname.lastIndexOf("."),
       file.originalname.length,
     );
-    let imgName = file.fieldname + "-" + uniqueSuffix + ext;
+    const imgName = file.fieldname + "-" + uniqueSuffix + ext;
     cb(null, imgName);
   },
 });
@@ -79,7 +85,7 @@ router.post(
   "/addMQuestion",
   passport.authenticate("adminJwt", { session: false }),
   upload1.single("img"),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const { subject, exam, difficulty, questionText, correctOption, options } =
       req.body;
     const Model = msubjectToModelMap[subject][exam];
@@ -98,7 +104,7 @@ router.post(
       img: name,
     });
     await question.save();
-    const questionIdString = question._id.toString();
+    const questionIdString = question.id.toString();
     res.send({ id: questionIdString }).status(200).end();
   }),
 );
@@ -107,7 +113,7 @@ router.post(
   "/addNQuestion",
   passport.authenticate("adminJwt", { session: false }),
   upload1.single("img"),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const { subject, difficulty, questionText, correctOption } = req.body;
 
     const Model = nsubjectToModelMap[subject];
@@ -126,7 +132,7 @@ router.post(
       img: name,
     });
     await question.save();
-    const questionIdString = question._id.toString();
+    const questionIdString = question.id.toString();
     res.send({ id: questionIdString }).status(200).end();
   }),
 );
@@ -134,13 +140,23 @@ router.post(
 router.get(
   "/GeneratePaper",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
-    const { exam, difficulty, totalQuestions, num, name } = req.query;
-    const subject = JSON.parse(req.query.subject);
+  asyncWrapper(async (req, res) => {
+    const exam: string = req.query.exam as string;
+    const difficulty: string = req.query.difficulty as string;
+    const totalQuestions: number = parseInt(req.query.totalQuestions as string);
+    const num: number = parseInt(req.query.num as string);
+    const name: string = req.query.name as string;
+    if (!exam || !difficulty || !totalQuestions || !num || !name) {
+      throw new Error("Invalid parameters.");
+    }
+    const subject = JSON.parse(req.query.subject as string);
+    if (subject.length === 0) {
+      throw new Error("Invalid subject.");
+    }
 
-    let mult = totalQuestions - num;
-    let questionIds = [];
-    let answers = [];
+    const mult = totalQuestions - num;
+    let questionIds: string[] = [];
+    let answers: number[] = [];
 
     if (subject.length > 1) {
       if (exam === "jee") {
@@ -151,29 +167,24 @@ router.get(
             throw new Error("Invalid subject or exam type.");
           }
 
-          const mquestions = await getRandomQuestions(
+          const mquestions: IQuestion[] = await getRandomQuestions(
             mmodel,
             difficulty,
             mult / 3,
           );
-          if (mquestions.error) {
-            throw new Error(mquestions.error);
-          }
-          const nquestions = await getRandomQuestions(
+          const nquestions: IQuestion[] = await getRandomQuestions(
             nmodel,
             difficulty,
             num / 3,
           );
-          if (nquestions.error) {
-            throw new Error(nquestions.error);
-          }
+
           questionIds = questionIds.concat(
-            mquestions.map((item) => item._id),
-            nquestions.map((item) => item._id),
+            mquestions.map((item) => item._id as string),
+            nquestions.map((item) => item._id as string),
           );
           answers = answers.concat(
-            mquestions.map((item) => item.correctOption),
-            nquestions.map((item) => item.correctOption),
+            mquestions.map((item) => item.correctOption as number),
+            nquestions.map((item) => item.correctOption as number),
           );
         }
       } else {
@@ -187,11 +198,12 @@ router.get(
             difficulty,
             mult / 3,
           );
-          if (questions.error) {
-            throw new Error(questions.error);
-          }
-          questionIds = questionIds.concat(questions.map((item) => item._id));
-          answers = answers.concat(questions.map((item) => item.correctOption));
+          questionIds = questionIds.concat(
+            questions.map((item) => item._id as string),
+          );
+          answers = answers.concat(
+            questions.map((item) => item.correctOption as number),
+          );
         }
       }
     } else {
@@ -201,11 +213,8 @@ router.get(
       }
 
       const mQuestions = await getRandomQuestions(Model, difficulty, mult);
-      if (mQuestions.error) {
-        throw new Error(mQuestions.error);
-      }
-      questionIds = mQuestions.map((item) => item._id);
-      answers = mQuestions.map((item) => item.correctOption);
+      questionIds = mQuestions.map((item) => item._id as string);
+      answers = mQuestions.map((item) => item.correctOption as number);
 
       if (exam === "jee") {
         const nModel = nsubjectToModelMap[subject[0]];
@@ -213,11 +222,12 @@ router.get(
           throw new Error("Invalid subject or exam type.");
         }
         const nQuestions = await getRandomQuestions(nModel, difficulty, num);
-        if (nQuestions.error) {
-          throw new Error(nQuestions.error);
-        }
-        questionIds = questionIds.concat(nQuestions.map((item) => item._id));
-        answers = answers.concat(nQuestions.map((item) => item.correctOption));
+        questionIds = questionIds.concat(
+          nQuestions.map((item) => item._id as string),
+        );
+        answers = answers.concat(
+          nQuestions.map((item) => item.correctOption as number),
+        );
       }
     }
     const paper = new Test({
@@ -239,7 +249,7 @@ router.get(
 router.post(
   "/CreatePaper",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const { subject, exam, totalQuestions, num, name, questionIds, answers } =
       req.body;
     const paper = new Test({
@@ -260,23 +270,25 @@ router.post(
 router.get(
   "/getTests",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) - 1 || 0;
-    const limit = parseInt(req.query.limit) || 10;
+  asyncWrapper(async (req, res) => {
+    const page = parseInt(req.query.page as string) - 1 || 0;
+    const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search || "";
-    let sort = parseInt(req.query.sort) || -1;
-    let genre = req.query.subject || "All";
-    let pageno = [1];
+    const sort = parseInt(req.query.sort as string) || -1;
+    let genre: string[] = [(req.query.subject as string) || "All"];
+    const pageno = [1];
     const genreOptions = ["physics", "chemistry", "math", "bio"];
 
-    genre === "All"
-      ? (genre = [...genreOptions])
-      : (genre = req.query.subject.split(","));
+    if (genre[0] === "All") {
+      genre = [...genreOptions];
+    } else {
+      genre = (req.query.subject as string).split(",");
+    }
 
     const tests = await Test.find({ name: { $regex: search, $options: "i" } })
       .where("subject")
       .in([...genre])
-      .sort({ date: sort })
+      .sort({ date: sort as 1 | -1 })
       .skip(page * limit)
       .limit(limit)
       .lean()
@@ -288,7 +300,7 @@ router.get(
       name: { $regex: search, $options: "i" },
     });
 
-    let totalpage = total / limit;
+    const totalpage = total / limit;
     if (totalpage > 1) {
       for (let i = 1; i < totalpage; i++) {
         pageno.push(i + 1);
@@ -310,19 +322,17 @@ router.get(
 );
 router.get(
   "/deleteTest/:id",
-  asyncHandler(
-    passport.authenticate("adminJwt", { session: false }),
-    async (req, res) => {
-      const id = req.params.id;
-      await Test.findByIdAndDelete(id);
-      res.status(200).end();
-    },
-  ),
+  passport.authenticate("adminJwt", { session: false }),
+  asyncWrapper(async (req, res) => {
+    const id = req.params.id;
+    await Test.findByIdAndDelete(id);
+    res.status(200).end();
+  }),
 );
 router.get(
   "/deletePdf/:id",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const id = req.params.id;
     await Pdf.findOneAndDelete({ url: id });
     const filePath = path.join(__dirname, "../files/pdf/", id);
@@ -337,7 +347,7 @@ router.get(
 router.get(
   "/pdf/:url",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const fileUrl = req.params.url;
     const filePath = path.join(__dirname, "../files/pdf/", fileUrl);
     res.sendFile(filePath);
@@ -346,23 +356,25 @@ router.get(
 router.get(
   "/pdfs",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) - 1 || 0;
-    const limit = parseInt(req.query.limit) || 10;
+  asyncWrapper(async (req, res) => {
+    const page = parseInt(req.query.page as string) - 1 || 0;
+    const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search || "";
-    let sort = parseInt(req.query.sort) || -1;
-    let genre = req.query.subject || "All";
-    let pageno = [1];
+    const sort = parseInt(req.query.sort as string) || -1;
+    let genre = [(req.query.subject as string) || "All"];
+    const pageno = [1];
     const genreOptions = ["physics", "chemistry", "math", "biology"];
 
-    genre === "All"
-      ? (genre = [...genreOptions])
-      : (genre = req.query.subject.split(","));
+    if (genre[0] === "All") {
+      genre = [...genreOptions];
+    } else {
+      genre = (req.query.subject as string).split(",");
+    }
 
     const pdfs = await Pdf.find({ name: { $regex: search, $options: "i" } })
       .where("subject")
       .in([...genre])
-      .sort({ date: sort })
+      .sort({ date: sort as 1 | -1 })
       .skip(page * limit)
       .limit(limit)
       .select("name url");
@@ -372,7 +384,7 @@ router.get(
       name: { $regex: search, $options: "i" },
     });
 
-    let totalpage = total / limit;
+    const totalpage = total / limit;
     if (totalpage > 1) {
       for (let i = 1; i < totalpage; i++) {
         pageno.push(i + 1);
@@ -393,7 +405,7 @@ router.get(
 router.get(
   "/dashboard",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (_req, res) => {
     const totalStudent = await Student.countDocuments();
     const jeePhysics = await JPhysicsQuestion.countDocuments();
     const jeeChemistry = await JChemistryQuestion.countDocuments();
@@ -423,21 +435,21 @@ router.get(
 router.get(
   "/studentList",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) - 1 || 0;
-    const limit = parseInt(req.query.limit) || 10;
+  asyncWrapper(async (req, res) => {
+    const page = parseInt(req.query.page as string) - 1 || 0;
+    const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search || "";
-    let sort = parseInt(req.query.sort) || -1;
-    let exam = req.query.exam || "Jee";
-    let pageno = [1];
+    const sort = parseInt(req.query.sort as string) || -1;
+    const exam = req.query.exam || "Jee";
+    const pageno = [1];
     let rankType = "topMarks";
     if (sort == 1) {
       rankType = "averageMarks";
     }
-    let i = exam === "Neet" ? 1 : 0;
+    const i = exam === "Neet" ? 1 : 0;
 
-    const sortCriteria = {};
-    sortCriteria[rankType + "." + i] = -1;
+    const sortCriteria: { [key: string]: SortOrder } = {};
+    sortCriteria[rankType + "." + i.toString] = -1;
 
     const students = await Student.find({
       name: { $regex: search, $options: "i" },
@@ -451,7 +463,7 @@ router.get(
       name: { $regex: search, $options: "i" },
     });
 
-    let totalpage = Math.ceil(total / limit);
+    const totalpage = Math.ceil(total / limit);
     if (totalpage > 1) {
       for (let i = 1; i < totalpage; i++) {
         pageno.push(i + 1);
@@ -473,15 +485,18 @@ router.get(
 router.get(
   "/getResult",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const studentId = req.query.studentId;
     const resultId = req.query.resultId;
     const student = await Student.findById(studentId)
       .select("results")
       .lean()
       .exec();
+    if (!student) {
+      throw new Error("Student not found.");
+    }
     const results = student.results.filter((result) =>
-      result._id.equals(resultId),
+      result._id.equals(resultId as string),
     );
     const test = await Test.findById(results[0].testId)
       .select("exam totalQuestions questionIds answers num")
@@ -494,14 +509,14 @@ router.get(
 router.get(
   "/attemptList",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
+  asyncWrapper(async (req, res) => {
     const testId = req.query.testId;
-    const page = parseInt(req.query.page) - 1 || 0;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page as string) - 1 || 0;
+    const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search || "";
-    let sort = parseInt(req.query.sort) || -1;
-    let pageno = [1];
-    let students = await Student.find({
+    const sort = parseInt(req.query.sort as string) || -1;
+    const pageno = [1];
+    const students = await Student.find({
       name: { $regex: search, $options: "i" },
       results: {
         $elemMatch: { testId: testId },
@@ -510,32 +525,37 @@ router.get(
       .skip(page * limit)
       .limit(limit)
       .select("_id name profileImg results");
-    let filteredStudents = [];
+    const filteredStudents: {
+      _id: string;
+      name: string;
+      profileImg: string;
+      results: IResult[];
+    }[] = [];
     students.forEach((student) => {
-      let filteredResults = student.results.filter(
+      const filteredResults = student.results.filter(
         (result) => result.testId === testId,
       );
       if (filteredResults.length > 1) {
         filteredResults.forEach((result, index) => {
           if (index === 0) {
-            let filteredStudent = {
-              _id: student._id.toString(),
+            const filteredStudent = {
+              _id: student.id.toString() as string,
               name: student.name,
-              profileImg: student.profileImg,
+              profileImg: student.profileImg as string,
               results: [result],
             };
             filteredStudents.push(filteredStudent);
           } else {
-            let clonedStudent = JSON.parse(JSON.stringify(student));
+            const clonedStudent = JSON.parse(JSON.stringify(student));
             clonedStudent.results = [result];
             filteredStudents.push(clonedStudent);
           }
         });
       } else if (filteredResults.length === 1) {
         filteredStudents.push({
-          _id: student._id.toString(),
+          _id: student.id.toString(),
           name: student.name,
-          profileImg: student.profileImg,
+          profileImg: student.profileImg as string,
           results: filteredResults,
         });
       }
@@ -556,7 +576,7 @@ router.get(
       },
     });
 
-    let totalpage = Math.ceil(total / limit);
+    const totalpage = Math.ceil(total / limit);
     if (totalpage > 1) {
       for (let i = 1; i < totalpage; i++) {
         pageno.push(i + 1);
@@ -577,8 +597,10 @@ router.get(
 router.get(
   "/getQuestion",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
-    const { subject, exam, id } = req.query;
+  asyncWrapper(async (req, res) => {
+    const subject = req.query.subject as string;
+    const id = req.query.id as string;
+    const exam = req.query.exam as string;
     const Model = msubjectToModelMap[subject][exam];
     if (!Model) {
       throw new Error("Invalid subject or exam type.");
@@ -592,8 +614,9 @@ router.get(
 router.get(
   "/getnQuestion",
   passport.authenticate("adminJwt", { session: false }),
-  asyncHandler(async (req, res) => {
-    const { subject, id } = req.query;
+  asyncWrapper(async (req, res) => {
+    const subject = req.query.subject as string;
+    const id = req.query.id as string;
     const Model = nsubjectToModelMap[subject];
     if (!Model) {
       throw new Error("Invalid subject or exam type.");
@@ -603,4 +626,4 @@ router.get(
   }),
 );
 
-module.exports = router;
+export default router;

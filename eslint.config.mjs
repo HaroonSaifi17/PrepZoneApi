@@ -1,16 +1,20 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+import prettierConfig from "eslint-config-prettier";
 
-export default [
-  { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
-  { languageOptions: { globals: globals.node } },
-  pluginJs.configs.recommended,
+export default tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  prettierConfig,
   {
     rules: {
-      "no-unused-vars": [
+      "@typescript-eslint/array-type": "error",
+      "@typescript-eslint/no-explicit-any": ["warn", { ignoreRestArgs: true }],
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_" },
       ],
     },
   },
-];
+);
