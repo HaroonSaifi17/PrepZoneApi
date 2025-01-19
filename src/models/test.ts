@@ -1,13 +1,12 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-interface ITest extends Document {
+export interface ITest extends Document {
   name: string;
-  subject: string[];
-  exam: string;
+  subject: "physics" | "chemistry" | "mathematics" | "biology" | "all";
+  exam: 'JEE' | 'NEET';
   totalQuestions: number;
-  date: string;
-  num: number;
-  answers: number[];
+  totalNumerical: number;
+  correctOptions: number[];
   questionIds: string[];
 }
 
@@ -17,27 +16,31 @@ const testSchema = new Schema<ITest>({
     required: true,
   },
   subject: {
-    type: [String],
+    type: String,
+    Enum: ["physics", "chemistry", "mathematics", "biology", "all"],
     required: true,
   },
   exam: {
     type: String,
+    enum: ["JEE", "NEET"],
     required: true,
   },
   totalQuestions: {
     type: Number,
     required: true,
   },
-  date: String,
-  num: Number,
-  answers: [Number],
+  totalNumerical: Number,
+  correctOptions: {
+    type: [Number],
+    required: true,
+  },
   questionIds: [
     {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
     },
   ],
-});
+}, { timestamps: true });
 
 const Test = mongoose.model<ITest>("tests", testSchema);
 

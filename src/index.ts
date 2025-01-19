@@ -2,15 +2,12 @@ import express, { Application } from "express";
 import cors from "cors";
 import "./setup/mongoose";
 import dotenv from "dotenv";
-import errorMiddleware from "./utils/errorMiddleware";
+import { errorMiddleware } from "./utils/errorMiddleware";
 import asyncWrapper from "./utils/asyncWrapper";
 
 dotenv.config();
 
-import studentRoutes from "./routes/student";
-import loginRoutes from "./routes/login";
-import notesRoutes from "./routes/notes";
-import adminRoutes from "./routes/admin";
+import routes from "./routes";
 
 const app: Application = express();
 const port = process.env.PORT || 8000;
@@ -22,10 +19,7 @@ import "./setup/passport";
 import "./setup/mongoose";
 
 app.use(errorMiddleware);
-app.use("/login", loginRoutes);
-app.use("/student", studentRoutes);
-app.use("/admin", adminRoutes);
-app.use("/notes", notesRoutes);
+app.use("/", routes);
 
 app.post(
   "/contactForm",
