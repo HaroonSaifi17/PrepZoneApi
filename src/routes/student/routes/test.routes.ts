@@ -3,52 +3,25 @@ import { authenticateJWT } from "../../../utils/student";
 import asyncWrapper from "../../../utils/asyncWrapper";
 import Test, { ITest } from "../../../models/test";
 import { getPaginatedItems } from "../../../utils/paginationHelper";
-import {
-  JEEChemistryMCQ,
-  JEEChemistryNumerical,
-  JEEMathematicsMCQ,
-  JEEMathematicsNumerical,
-  JEEPhysicsMCQ,
-  JEEPhysicsNumerical,
-  NEETBiologyMCQ,
-  NEETChemistryMCQ,
-  NEETPhysicsMCQ,
-} from "../../../models/question";
+import Question from "../../../models/question";
 import z from "zod";
 import { Types } from "mongoose";
+import { authenticateAnyRole } from "../../../utils/auth";
+import passport from "passport";
+import { CustomError } from "../../../utils/errorMiddleware";
 
 const router = Router();
 
-router.get("/", authenticateJWT, asyncWrapper(getPaginatedItems<ITest>(Test, 'name subject exam totalQuestions')));
-
-const subjectToModelMap = {
-  JEE: {
-    physics: {
-      mcq: JEEPhysicsMCQ,
-      numerical: JEEPhysicsNumerical,
-    },
-    chemistry: {
-      mcq: JEEChemistryMCQ,
-      numerical: JEEChemistryNumerical,
-    },
-    math: {
-      mcq: JEEMathematicsMCQ,
-      numerical: JEEMathematicsNumerical,
-    },
-  },
-  NEET: {
-    physics: {
-      mcq: NEETPhysicsMCQ,
-    },
-    chemistry: {
-      mcq: NEETChemistryMCQ,
-    },
-    biology: {
-      mcq: NEETBiologyMCQ,
-    },
-  },
-};
-
+router.get(
+  "/",
+  authenticateAnyRole(
+    passport.authenticate("adminJwt", { session: false }),
+    passport.authenticate("jwt", { session: false }),
+  ),
+  asyncWrapper(
+    getPaginatedItems<ITest>(Test, "name subject exam totalQuestions"),
+  ),
+);
 router.get(
   "/:id",
   authenticateJWT,
@@ -66,8 +39,8 @@ const questionValidator = z.object({
   id: z.string().refine((val) => Types.ObjectId.isValid(val), {
     message: "Invalid ObjectId format",
   }),
-  subject: z.enum(["JEE", "NEET"]),
-  subjectType: z.enum(["physics", "chemistry", "math", "biology"]),
+  exam: z.enum(["JEE", "NEET"]),
+  subject: z.enum(["physics", "chemistry", "math", "biology"]),
   type: z.enum(["mcq", "numerical"]),
 });
 
@@ -75,27 +48,20 @@ router.get(
   "/question",
   authenticateJWT,
   asyncWrapper(async (req, res) => {
-    const { id, subject, subjectType, type } = questionValidator.parse(
-      req.query,
-    );
+    const { id, subject, exam, type } = questionValidator.parse(req.query);
 
-    const subjectMap = subjectToModelMap[subject]?.[subjectType];
-    if (!subjectMap) {
-      return res.status(400).json({ error: "Invalid subject combination" });
+    if (
+      (exam === "NEET" && type !== "mcq") ||
+      (exam === "JEE" && subject === "biology") ||
+      (exam === "NEET" && type === "numerical")
+    ) {
+      throw new CustomError("Invalid question type", 400);
     }
+    const question = await Question.findById(id);
 
-    const Model = subjectMap[type];
-    if (!Model) {
-      return res
-        .status(400)
-        .json({ error: "Invalid question type for this subject" });
-    }
-
-    const question = await Model.findById(id);
     if (!question) {
-      return res.status(404).json({ error: "Question not found" });
+      throw new CustomError("Question not found", 404);
     }
-
     res.json(question);
   }),
 );

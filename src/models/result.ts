@@ -7,6 +7,8 @@ export interface IResult extends Document {
     correct: number;
     wrong: number;
     score: number;
+    timeTaken: number;
+    accuracy: number;
   }[];
   chosenOptions: (number | null)[];
   correctOptions: number[];
@@ -14,6 +16,9 @@ export interface IResult extends Document {
   subject: "physics" | "chemistry" | "mathematics" | "biology" | "all";
   timeTaken: number;
   totalScore: number;
+  accuracy: number;
+  correct: number;
+  wrong: number;
 }
 
 const ResultSchema = new Schema<IResult>(
@@ -25,6 +30,8 @@ const ResultSchema = new Schema<IResult>(
         correct: { type: Number, required: true },
         wrong: { type: Number, required: true },
         score: { type: Number, required: true },
+        accuracy: { type: Number, required: true },
+        timeTaken: { type: Number, required: true },
       },
     ],
     chosenOptions: { type: [Number], required: true },
@@ -41,6 +48,9 @@ const ResultSchema = new Schema<IResult>(
     },
     totalScore: { type: Number, required: true },
     timeTaken: { type: Number, required: true },
+    accuracy: { type: Number, required: true },
+    correct: { type: Number, required: true },
+    wrong: { type: Number, required: true },
   },
   { timestamps: true },
 );

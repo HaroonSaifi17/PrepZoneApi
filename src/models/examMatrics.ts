@@ -84,4 +84,9 @@ const NEETMetricsSchema = new Schema<INEETMetrics>({
   },
 });
 
+export interface IExamMetrics {
+  JEE: IJEEMetrics;
+  NEET: INEETMetrics;
+}
+
 export { IJEEMetrics, INEETMetrics, JEEMetricsSchema, NEETMetricsSchema };

@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-interface IPdf extends Document {
+export interface IPdf extends Document {
   name: string;
   url: string;
   subject: "physics" | "chemistry" | "mathematics" | "biology" | "all";
@@ -12,7 +12,7 @@ const pdfSchema = new Schema<IPdf>(
     url: { type: String, required: true },
     subject: {
       type: String,
-      enum: ["physics", "chemistry", "mathematics", "biology", "all"],
+      enum: ["physics", "chemistry", "mathematics", "biology"],
       required: true,
     },
   },
