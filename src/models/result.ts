@@ -8,12 +8,12 @@ export interface IResult extends Document {
     wrong: number;
     score: number;
   }[];
-  chosenOptions: number[];
+  chosenOptions: (number | null)[];
   correctOptions: number[];
-  examType: "JEE" | "NEET";
+  exam: "JEE" | "NEET";
   subject: "physics" | "chemistry" | "mathematics" | "biology" | "all";
-  totalTime: number;
-  totalMarks: number;
+  timeTaken: number;
+  totalScore: number;
 }
 
 const ResultSchema = new Schema<IResult>(
@@ -29,7 +29,7 @@ const ResultSchema = new Schema<IResult>(
     ],
     chosenOptions: { type: [Number], required: true },
     correctOptions: { type: [Number], required: true },
-    examType: {
+    exam: {
       type: String,
       Enum: ["JEE", "NEET"],
       required: true,
@@ -39,8 +39,8 @@ const ResultSchema = new Schema<IResult>(
       Enum: ["physics", "chemistry", "mathematics", "biology", "all"],
       required: true,
     },
-    totalTime: { type: Number, required: true },
-    totalMarks: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    timeTaken: { type: Number, required: true },
   },
   { timestamps: true },
 );

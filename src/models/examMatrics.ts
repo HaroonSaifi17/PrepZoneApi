@@ -6,16 +6,16 @@ interface ISubjectMetrics {
 }
 
 interface IJEEMetrics {
-  topMarks: number;
-  averageMarks: number;
+  topScore: number;
+  averageScore: number;
   physics: ISubjectMetrics;
   chemistry: ISubjectMetrics;
   mathematics: ISubjectMetrics;
 }
 
 interface INEETMetrics {
-  topMarks: number;
-  averageMarks: number;
+  topScore: number;
+  averageScore: number;
   physics: ISubjectMetrics;
   chemistry: ISubjectMetrics;
   biology: ISubjectMetrics;
@@ -27,8 +27,8 @@ const SubjectMetricsSchema = new Schema<ISubjectMetrics>({
 });
 
 const JEEMetricsSchema = new Schema<IJEEMetrics>({
-  topMarks: { type: Number, required: true, default: 0 },
-  averageMarks: { type: Number, required: true, default: 0 },
+  topScore: { type: Number, required: true, default: 0 },
+  averageScore: { type: Number, required: true, default: 0 },
   physics: {
     type: SubjectMetricsSchema,
     required: true,
@@ -56,8 +56,8 @@ const JEEMetricsSchema = new Schema<IJEEMetrics>({
 });
 
 const NEETMetricsSchema = new Schema<INEETMetrics>({
-  topMarks: { type: Number, required: true, default: 0 },
-  averageMarks: { type: Number, required: true, default: 0 },
+  topScore: { type: Number, required: true, default: 0 },
+  averageScore: { type: Number, required: true, default: 0 },
   physics: {
     type: SubjectMetricsSchema,
     required: true,

@@ -12,7 +12,7 @@ export interface IStudent extends Document {
   phoneNumber: number;
   profileImg: string;
   examType: "JEE" | "NEET";
-  results: string[];
+  results: Schema.Types.ObjectId[];
   examMetrics: {
     JEE: IJEEMetrics;
     NEET: INEETMetrics;
