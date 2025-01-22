@@ -7,24 +7,22 @@ import Question from "../../../models/question";
 import z from "zod";
 import { Types } from "mongoose";
 import { authenticateAnyRole } from "../../../utils/auth";
-import passport from "passport";
 import { CustomError } from "../../../utils/errorMiddleware";
+import { authenticateAdminJWT } from "../../../utils/admin";
 
 const router = Router();
 
 router.get(
   "/",
-  authenticateAnyRole(
-    passport.authenticate("adminJwt", { session: false }),
-    passport.authenticate("jwt", { session: false }),
-  ),
+  authenticateAnyRole(authenticateJWT, authenticateAdminJWT),
   asyncWrapper(
     getPaginatedItems<ITest>(Test, "name subject exam totalQuestions"),
   ),
 );
+
 router.get(
   "/:id",
-  authenticateJWT,
+  authenticateAnyRole(authenticateJWT, authenticateAdminJWT),
   asyncWrapper(async (req, res) => {
     const validator = z.string().refine((val) => Types.ObjectId.isValid(val), {
       message: "Invalid ObjectId format",
@@ -46,7 +44,7 @@ const questionValidator = z.object({
 
 router.get(
   "/question",
-  authenticateJWT,
+  authenticateAnyRole(authenticateJWT, authenticateAdminJWT),
   asyncWrapper(async (req, res) => {
     const { id, subject, exam, type } = questionValidator.parse(req.query);
 

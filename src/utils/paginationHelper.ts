@@ -7,11 +7,11 @@ interface BaseDocument {
   subject: string;
 }
 
-interface SortCriteria {
+export interface SortCriteria {
   [key: string]: SortOrder;
 }
 
-interface PaginationResult<T> {
+export interface PaginationResult<T> {
   success: boolean;
   data: {
     items: T[];

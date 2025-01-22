@@ -62,4 +62,17 @@ router.get(
   getPaginatedItems<IPdf>(Pdf, "name url subject"),
 );
 
+router.delete(
+  "/:id",
+  authenticateAdminJWT,
+  asyncWrapper(async (req, res) => {
+    const id = z.string().parse(req.params.id);
+    await Pdf.findByIdAndDelete(id);
+    res.json({
+      success: true,
+      message: "Deleted",
+    });
+  }),
+);
+
 export default router;

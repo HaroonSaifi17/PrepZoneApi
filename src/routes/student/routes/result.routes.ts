@@ -1,30 +1,69 @@
 import { Router } from "express";
 import { authenticateJWT, isUser } from "../../../utils/student";
 import asyncWrapper from "../../../utils/asyncWrapper";
-import Result, { IResult } from "../../../models/result";
-import { getPaginatedItems } from "../../../utils/paginationHelper";
+import Result from "../../../models/result";
 import { Types, Schema } from "mongoose";
 import z from "zod";
 import { JwtPayload } from "jsonwebtoken";
 import Test from "../../../models/test";
 import { getStudentDataById } from "../../../utils/student";
+import { authenticateAnyRole } from "../../../utils/auth";
+import { authenticateAdminJWT } from "../../../utils/admin";
+import Student from "../../../models/student";
+import {
+  QuerySchema,
+} from "../../../utils/paginationHelper";
 
 const router = Router();
 
-router.get(
-  "/",
-  authenticateJWT,
-  asyncWrapper(
-    getPaginatedItems<IResult>(
-      Result,
-      "testId subject exam totalQuestions name",
-    ),
-  ),
-);
+router.get("/", authenticateAnyRole(authenticateJWT, authenticateAdminJWT), asyncWrapper(async (req, res) => {
+  const user = req.query.id ? { id: req.query.id } : req.user as JwtPayload;
+  const id = z.string().refine(val => Types.ObjectId.isValid(val), { message: "Invalid ObjectId format" }).parse(user.id);
+  
+  const resultIds = await Student.findById(id).select("results");
+  if (!resultIds) throw new Error("Result IDs not found");
+
+  const { page, limit, searchTerm, subject, sortBy, sortOrder } = QuerySchema.parse(req.query);
+  
+  const filterCriteria = {
+    ...(searchTerm && { name: { $regex: searchTerm, $options: "i" } }),
+    ...(subject && subject !== "all" && { 
+      subject,
+      _id: { $in: resultIds.results }
+    })
+  };
+
+  const [items, totalItems] = await Promise.all([
+    Result.find(filterCriteria)
+      .select("name subject exam totalScore testId")
+      .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    Result.countDocuments(filterCriteria)
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return res.json({
+    success: true,
+    data: {
+      items,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      filters: { subject, searchTerm },
+      sorting: { sortBy, sortOrder }
+    }
+  });
+}));
 
 router.get(
   "/:id",
-  authenticateJWT,
+  authenticateAnyRole(authenticateJWT, authenticateAdminJWT),
   asyncWrapper(async (req, res) => {
     const validation = z.string().refine((val) => Types.ObjectId.isValid(val), {
       message: "Invalid ObjectId format",

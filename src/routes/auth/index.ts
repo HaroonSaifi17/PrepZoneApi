@@ -30,9 +30,13 @@ router.get(
 
     const newAccount = user.phoneNumber === undefined ? true : false;
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as string, {
-      expiresIn: "10h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: "10h",
+      },
+    );
 
     res.redirect(
       `${process.env.REDIRECT_URL}?token=${token}&newAccount=${newAccount}`,

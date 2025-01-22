@@ -77,7 +77,7 @@ const adminJwtOptions = {
 
 passport.use(
   "adminJwt",
-  new JWTStrategy(adminJwtOptions, (payload: JwtPayload, done) => {
+  new JWTStrategy(adminJwtOptions, (payload: { username: string }, done) => {
     return done(null, payload);
   }),
 );
